@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import re
 
-# --- SAYFA AYARLARI ---
+# --- PRESTİJ AYARLARI ---
 st.set_page_config(page_title="Bİ'EDERİ | Değerini Öğren", layout="centered")
 
 st.markdown("""
@@ -16,12 +16,34 @@ st.markdown("""
         background-image: radial-gradient(circle at 50% 20%, #1a1a2e 0%, #000000 70%) !important;
     }
 
-    /* Başlık */
-    h1 {
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
-        letter-spacing: -2px !important;
-        font-weight: 800 !important;
+    /* SİYAH KUTUCUKLARI SİLEN "NUCLEAR" CSS */
+    /* Giriş alanlarının tüm arka planlarını ve gölgelerini kapatır */
+    div[data-baseweb="input"], 
+    div[data-baseweb="select"], 
+    div[data-testid="stNumberInput"], 
+    div[data-testid="stSelectbox"],
+    .st-ae, .st-af, .st-ag, .st-ah { 
+        background-color: transparent !important; 
+        border: none !important; 
+        box-shadow: none !important;
+    }
+
+    /* Giriş kutusunun gerçek içeriğini bembeyaz ve şık yapar */
+    input, div[role="combobox"], div[data-baseweb="select"] > div {
+        background-color: #111 !important;
         color: #FFFFFF !important;
+        border: 1px solid #333 !important;
+        border-bottom: 2px solid #FFCC00 !important; /* Altın sarısı şerit */
+        border-radius: 12px !important;
+        padding: 10px !important;
+        font-weight: 800 !important;
+    }
+
+    /* Sayı girişindeki yan butonları (artı-eksi) şeffaf yapar */
+    [data-testid="stNumberInput"] button {
+        background-color: transparent !important;
+        border: 1px solid #444 !important;
+        color: white !important;
     }
 
     /* Kart Tasarımı */
@@ -36,75 +58,33 @@ st.markdown("""
         border-left: 6px solid #FF0000 !important;
     }
 
-    /* --- SİYAH KUTUCUKLARI SİLEN KESİN ÇÖZÜM --- */
-    /* Tüm input ve selectbox alanlarını temizle */
-    div[data-baseweb="select"], 
-    div[data-baseweb="input"], 
-    .stNumberInput div, 
-    .stSelectbox div {
-        background-color: transparent !important;
-        background: transparent !important;
-        border: none !important;
-    }
-
-    /* Gerçek giriş alanlarının stilini belirle */
-    input, div[role="combobox"] {
-        background-color: #111111 !important;
+    /* Başlıklar ve Metinler */
+    h1, h2, h3, p, label {
         color: #FFFFFF !important;
-        border-radius: 12px !important;
-        border: 1px solid #333 !important;
-        border-bottom: 2px solid #FFCC00 !important; /* Alt neon şerit */
-        padding: 12px !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
         font-weight: 800 !important;
     }
 
-    /* Sayı girişindeki siyah kareleri ve butonları temizle */
-    .stNumberInput button {
-        background-color: #222 !important;
-        color: white !important;
-        border: 1px solid #444 !important;
-    }
-
-    label {
-        color: #FFFFFF !important;
-        font-weight: 800 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 1px !important;
-        font-size: 0.8rem !important;
-        opacity: 0.7;
-    }
-
-    /* FİYAT PANELİ */
+    /* Fiyat Paneli */
     .price-box {
         background: linear-gradient(135deg, #FFCC00 0%, #FFAA00 100%) !important;
-        padding: 45px !important;
+        padding: 40px !important;
         border-radius: 30px !important;
         text-align: center !important;
-        margin: 30px 0 !important;
-        border: 2px solid #000000 !important;
-        box-shadow: 0 0 40px rgba(255, 204, 0, 0.4);
-    }
-    
-    .price-val { 
-        color: #000000 !important; 
-        font-family: 'Orbitron', sans-serif !important;
-        font-size: 5rem !important; 
-        font-weight: 900 !important; 
-        line-height: 1 !important;
+        border: 3px solid #000 !important;
+        box-shadow: 0 0 30px rgba(255, 204, 0, 0.3);
     }
 
-    /* ANA BUTON */
+    /* Ana Buton */
     .stButton>button {
         background: linear-gradient(90deg, #FF0000 0%, #B20000 100%) !important;
         color: white !important;
         font-weight: 900 !important;
-        font-size: 1.1rem !important;
         border-radius: 20px !important;
         height: 4em !important;
         border: none !important;
-        box-shadow: 0 10px 30px rgba(255, 0, 0, 0.4) !important;
-        transition: 0.3s !important;
         text-transform: uppercase !important;
+        width: 100% !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -125,11 +105,11 @@ def veriyi_ayristir(metin):
 
 # --- HEADER ---
 st.markdown("<br><h1 style='text-align: center; font-size: 5rem;'>Bİ'<span style='color:#FF0000'>EDERİ</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #FFCC00; font-weight: 800; letter-spacing: 5px; margin-top:-25px;'>GERÇEK DEĞERİNİ ÖĞRENİN</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #FFCC00; letter-spacing: 5px; margin-top:-25px;'>GERÇEK DEĞERİNİ ÖĞRENİN</p>", unsafe_allow_html=True)
 
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    st.markdown("<h3 style='margin-top:0; color:#FFF;'>📊 Pazar Verilerini Aktarın</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='margin-top:0;'>📊 Pazar Verilerini Aktarın</h3>", unsafe_allow_html=True)
     raw_input = st.text_area("", height=200, placeholder="İlanları buraya yapıştırın...")
     if st.button("ANALİZİ BAŞLAT"):
         if raw_input:
@@ -170,7 +150,7 @@ else:
         st.markdown(f"""
             <div class='price-box'>
                 <p style='color:#000000; font-weight:800; letter-spacing:2px; opacity:0.7;'>TAHMİNİ SATIŞ FİYATI</p>
-                <h1 class='price-val'>{max(0, final_price):,.0f} TL</h1>
+                <h1 style='color:#000; font-size:4.5rem; font-weight:900;'>{max(0, final_price):,.0f} TL</h1>
             </div>
         """, unsafe_allow_html=True)
 
