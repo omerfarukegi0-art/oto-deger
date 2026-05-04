@@ -3,89 +3,102 @@ import pandas as pd
 import numpy as np
 import re
 
-# --- LÜKS TEMA VE RENK AYARLARI ---
-st.set_page_config(page_title="OTO-DEĞER | Sport", layout="centered")
+# --- PRESTİJ AYARLARI ---
+st.set_page_config(page_title="Bİ'EDERİ | Değerini Öğren", layout="centered")
 
 st.markdown("""
     <style>
     @import url('https://googleapis.com');
     
-    /* Arka Plan */
+    /* Ana Arka Plan: Koyu ve Zengin */
     .stApp {
-        background: radial-gradient(circle at top right, #1e2229, #0f1115) !important;
+        background-color: #000000 !important;
+        background-image: radial-gradient(circle at 50% 20%, #1a1a2e 0%, #000000 70%) !important;
     }
 
-    /* Genel Metinler */
-    h1, h2, h3, p, span, .stMarkdown {
-        color: #FFFFFF !important;
+    /* Başlık Fontu: Bİ'EDERİ */
+    h1 {
         font-family: 'Plus Jakarta Sans', sans-serif !important;
-    }
-
-    /* --- OKUNURLUK DÜZELTMESİ (KM ve TRAMER İÇİN) --- */
-    /* Giriş kutularının etiketleri (Başlıkları) */
-    label {
+        letter-spacing: -2px !important;
+        font-weight: 800 !important;
         color: #FFFFFF !important;
-        font-weight: 700 !important;
-        font-size: 0.9rem !important;
-        margin-bottom: 5px !important;
     }
 
-    /* Kutuların içindeki rakamların rengini BEYAZ yapıyoruz */
-    input {
-        color: #FFFFFF !important;
-        -webkit-text-fill-color: #FFFFFF !important; /* Tarayıcı uyumluluğu için */
-        background-color: #262730 !important; /* Kutunun içini biraz daha gri yapalım */
-        border: 1px solid rgba(255,255,255,0.2) !important;
-        font-weight: 600 !important;
-    }
-
-    /* Çoklu seçim (Boya/Değişen) kutuları */
-    .stMultiSelect div {
-        background-color: #262730 !important;
-        color: white !important;
-    }
-
-    /* Kartlar */
+    /* Kart Tasarımı */
     .luxury-card {
         background: rgba(255, 255, 255, 0.05) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 24px !important;
-        padding: 30px !important;
-        margin-bottom: 25px !important;
-        backdrop-filter: blur(10px);
-        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5), 0px 5px 0px #FF0000 !important;
+        border-radius: 30px !important;
+        padding: 40px !important;
+        margin-bottom: 30px !important;
+        backdrop-filter: blur(15px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        border-left: 6px solid #FF0000 !important; /* Sol tarafa agresif kırmızı şerit */
     }
 
-    /* Fiyat Paneli */
+    /* OKUNURLUK DÜZELTMESİ: Giriş Kutuları */
+    input, [data-testid="stNumberInput"] input {
+        color: #FFFFFF !important;
+        background-color: #0a0a0a !important;
+        border: 1px solid #333 !important;
+        border-bottom: 2px solid #FFCC00 !important; /* Alt çizgi sarı neon */
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        font-weight: 800 !important;
+        font-size: 1.2rem !important;
+        padding: 12px !important;
+    }
+
+    /* Giriş Başlıkları */
+    label {
+        color: #FFFFFF !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        font-size: 0.8rem !important;
+        opacity: 0.8;
+    }
+
+    /* FİYAT PANELİ: Altın Sarısı ve Parlak */
     .price-box {
         background: linear-gradient(135deg, #FFCC00 0%, #FFAA00 100%) !important;
-        padding: 35px !important;
-        border-radius: 20px !important;
+        padding: 45px !important;
+        border-radius: 30px !important;
         text-align: center !important;
-        margin: 25px 0 !important;
-        box-shadow: 0px 0px 20px rgba(255, 204, 0, 0.3);
+        margin: 30px 0 !important;
+        border: 3px solid #000000 !important;
+        box-shadow: 0 0 40px rgba(255, 204, 0, 0.4);
     }
     
     .price-val { 
         color: #000000 !important; 
-        font-size: 5rem !important; 
+        font-family: 'Orbitron', sans-serif !important;
+        font-size: 5.5rem !important; 
         font-weight: 900 !important; 
         line-height: 1 !important;
     }
 
-    /* Buton */
+    /* ANA BUTON: "DEĞERİNİ ÖĞREN" */
     .stButton>button {
         background: linear-gradient(90deg, #FF0000 0%, #B20000 100%) !important;
         color: white !important;
         font-weight: 900 !important;
-        border-radius: 12px !important;
-        height: 3.8em !important;
+        font-size: 1.2rem !important;
+        border-radius: 20px !important;
+        height: 4em !important;
+        border: none !important;
+        box-shadow: 0 10px 30px rgba(255, 0, 0, 0.4) !important;
+        transition: 0.3s !important;
         text-transform: uppercase !important;
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-4px) !important;
+        box-shadow: 0 15px 40px rgba(255, 0, 0, 0.6) !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- VERİ İŞLEME FONKSİYONU ---
+# --- VERİ ANALİZİ ---
 def veriyi_ayristir(metin):
     fiyatlar = [int(f.replace(".", "")) for f in re.findall(r"([\d\.]+)\s*TL", metin)]
     yillar = [int(y) for y in re.findall(r"\b(20[0-2][0-9])\b", metin)]
@@ -95,21 +108,19 @@ def veriyi_ayristir(metin):
         sayi = int(k.replace(".", "").replace(",", ""))
         if 500 < sayi < 600000 and sayi not in fiyatlar:
             kms.append(sayi)
-    
     limit = min(len(fiyatlar), len(yillar), len(kms))
     if limit == 0: return pd.DataFrame()
-    df = pd.DataFrame({"Yıl": yillar[:limit], "Fiyat": fiyatlar[:limit], "KM": kms[:limit]})
-    return df.drop_duplicates()
+    return pd.DataFrame({"Yıl": yillar[:limit], "Fiyat": fiyatlar[:limit], "KM": kms[:limit]}).drop_duplicates()
 
-# --- BAŞLIK ---
-st.markdown("<br><h1 style='text-align: center; font-size: 5.5rem; font-weight: 900; margin-bottom:0;'>OTO-<span style='color:#FF0000'>DEĞER</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #FF0000 !important; font-weight: 800; font-size: 1.2rem; margin-top:-25px; letter-spacing: 4px;'>ULTIMATE ANALYTICS</p>", unsafe_allow_html=True)
+# --- HEADER: Bİ'EDERİ ---
+st.markdown("<br><h1 style='text-align: center; font-size: 5rem;'>Bİ'<span style='color:#FF0000'>EDERİ</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #FFCC00; font-weight: 800; letter-spacing: 5px; margin-top:-25px;'>GERÇEK DEĞERİNİ ÖĞRENİN</p>", unsafe_allow_html=True)
 
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    st.markdown("<h3 style='margin-top:0;'>📋 İlan Listesi Girişi</h3>", unsafe_allow_html=True)
-    raw_input = st.text_area("", height=200, placeholder="Sahibinden metnini buraya yapıştırın...")
-    if st.button("🚀 ANALİZİ BAŞLAT"):
+    st.markdown("<h3 style='margin-top:0; color:#FFF;'>📊 Pazar Verilerini Aktarın</h3>", unsafe_allow_html=True)
+    raw_input = st.text_area("", height=200, placeholder="İlanları buraya kopyalayın...")
+    if st.button("ANALİZİ BAŞLAT"):
         if raw_input:
             temp_df = veriyi_ayristir(raw_input)
             if not temp_df.empty:
@@ -119,40 +130,35 @@ if 'data' not in st.session_state:
 else:
     # --- FORM ---
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("midnight_form"):
-        st.markdown("<h3 style='margin-top:0;'>🔍 Kondisyon Girişi</h3>", unsafe_allow_html=True)
+    with st.form("main_form"):
+        st.markdown("<h3 style='margin-top:0; color:#FF0000;'>📋 Araç Detayları</h3>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
             v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
-            v_km = st.number_input("KİLOMETRE", value=50000, step=5000)
-            v_vites = st.radio("ŞANZIMAN", ["Otomatik", "Manuel"], horizontal=True)
+            v_km = st.number_input("🛣️ KİLOMETRE", value=50000, step=5000)
+            v_vites = st.radio("🕹️ ŞANZIMAN", ["Otomatik", "Manuel"], horizontal=True)
         with col2:
-            v_hasar = st.number_input("TRAMER (TL)", value=0, step=1000)
-            v_boya = st.multiselect("🎨 BOYALI", ["Kaput", "Tavan", "Bagaj", "Yanlar"])
-            v_degisen = st.multiselect("🛠️ DEĞİŞEN", ["Kaput", "Bagaj", "Kapı", "Çamurluk"])
+            v_hasar = st.number_input("💸 TRAMER KAYDI (TL)", value=0, step=1000)
+            v_boya = st.multiselect("🎨 BOYALI PARÇALAR", ["Kaput", "Tavan", "Bagaj", "Yan Kapılar", "Çamurluklar"])
+            v_degisen = st.multiselect("🛠️ DEĞİŞEN PARÇALAR", ["Kaput", "Bagaj", "Kapı", "Çamurluk"])
         
-        submit = st.form_submit_button("💰 DEĞERLEME YAP")
+        st.write("<br>", unsafe_allow_html=True)
+        submit = st.form_submit_button("ARACIMIN DEĞERİNİ ÖĞREN")
 
     if submit:
         df = st.session_state.data
         yil_verisi = df[df["Yıl"] == v_yil]
-        
-        if len(yil_verisi) >= 2:
-            katsayi, _ = np.polyfit(yil_verisi["KM"], yil_verisi["Fiyat"], 1)
-            final_katsayi = abs(katsayi) if katsayi < 0 else 3.8
-        else:
-            final_katsayi = 4.5 if v_yil > 2021 else 3.5
-
+        katsayi = 4.2 if v_yil > 2021 else 3.5
         z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
-        baz_fiyat = np.poly1d(z)(v_yil)
+        baz = np.poly1d(z)(v_yil)
         km_ort = yil_verisi["KM"].mean() if not yil_verisi.empty else df["KM"].mean()
-        km_bonusu = (km_ort - v_km) * final_katsayi
         
-        final_price = (baz_fiyat * 1.05) + km_bonusu + (65000 if v_vites == "Otomatik" else -15000) - (v_hasar * 0.18 + len(v_boya)*8500 + len(v_degisen)*19000)
+        final_price = (baz * 1.05) + (km_ort - v_km) * katsayi + (65000 if v_vites == "Otomatik" else -15000) - (v_hasar * 0.18 + len(v_boya)*9000 + len(v_degisen)*22000)
 
+        # --- SONUÇ ---
         st.markdown(f"""
             <div class='price-box'>
-                <p style='color:#000000; font-weight:900; letter-spacing:2px; text-transform:uppercase; margin-bottom:5px; opacity:0.8;'>Tahmini Rayiç Değer</p>
+                <p style='color:#000000; font-weight:800; letter-spacing:2px; opacity:0.7;'>TAHMİNİ SATIŞ FİYATI</p>
                 <h1 class='price-val'>{max(0, final_price):,.0f} TL</h1>
             </div>
         """, unsafe_allow_html=True)
