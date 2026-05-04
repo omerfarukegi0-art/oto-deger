@@ -53,30 +53,39 @@ else:
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col_car:
-        # JAVASCRIPT DESTEKLİ GERÇEKÇİ ARABA ŞEMASI
-        # Her parça gerçek araba formunda çizildi (SVG Path)
+        # GERÇEKÇİ ARABA SİLUETİ (SVG)
         svg_html = """
         <div style="text-align:center;">
-            <svg viewBox="0 0 300 500" width="350" xmlns="http://w3.org" style="cursor:pointer; user-select:none;">
-                <!-- Arka Plan Gövde -->
-                <rect x="70" y="30" width="160" height="440" rx="50" fill="#f8f8f8" stroke="#ddd" stroke-width="2"/>
+            <svg viewBox="0 0 300 500" width="380" xmlns="http://w3.org" style="cursor:pointer; user-select:none;">
+                <!-- Araba Dış Hat (Gövde) -->
+                <path d="M 80,50 Q 150,20 220,50 L 235,120 L 245,250 L 235,380 L 220,450 Q 150,480 80,450 L 65,380 L 55,250 L 65,120 Z" fill="#f0f0f0" stroke="#ccc" stroke-width="2"/>
                 
-                <!-- Parçalar (İnteraktif) -->
-                <path id="Kaput" d="M 100,60 L 200,60 L 195,140 L 105,140 Z" fill="#d1d1d1" stroke="#000" stroke-width="1.5" />
-                <path id="Tavan" d="M 110,165 L 190,165 L 185,275 L 115,275 Z" fill="#d1d1d1" stroke="#000" stroke-width="1.5" />
-                <path id="Bagaj" d="M 105,330 L 195,330 L 205,420 L 95,420 Z" fill="#d1d1d1" stroke="#000" stroke-width="1.5" />
+                <!-- Kaput -->
+                <path id="Kaput" d="M 95,65 L 205,65 Q 200,140 195,150 L 105,150 Q 100,140 95,65" fill="#d1d1d1" stroke="#333" stroke-width="1.5" />
+                <!-- Tavan -->
+                <path id="Tavan" d="M 110,170 L 190,170 Q 185,280 180,290 L 120,290 Q 115,280 110,170" fill="#d1d1d1" stroke="#333" stroke-width="1.5" />
+                <!-- Bagaj -->
+                <path id="Bagaj" d="M 105,340 L 195,340 L 205,430 Q 150,450 95,430 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.5" />
                 
-                <path id="SolOnCamur" d="M 65,70 L 95,70 L 100,135 L 68,135 Z" fill="#d1d1d1" stroke="#000" stroke-width="1.5" />
-                <path id="SagOnCamur" d="M 205,70 L 235,70 L 232,135 L 200,135 Z" fill="#d1d1d1" stroke="#000" stroke-width="1.5" />
+                <!-- Sol Ön Çamurluk -->
+                <path id="SolOnCamur" d="M 60,60 Q 85,55 90,65 L 100,150 L 65,155 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+                <!-- Sağ Ön Çamurluk -->
+                <path id="SagOnCamur" d="M 240,60 Q 215,55 210,65 L 200,150 L 235,155 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
                 
-                <path id="SolOnKapi" d="M 70,145 L 108,145 L 113,230 L 73,230 Z" fill="#d1d1d1" stroke="#000" stroke-width="1.5" />
-                <path id="SagOnKapi" d="M 192,145 L 230,145 L 227,230 L 187,230 Z" fill="#d1d1d1" stroke="#000" stroke-width="1.5" />
+                <!-- Sol Ön Kapı -->
+                <path id="SolOnKapi" d="M 65,165 L 105,165 L 112,245 L 70,245 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+                <!-- Sağ Ön Kapı -->
+                <path id="SagOnKapi" d="M 235,165 L 195,165 L 188,245 L 230,245 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
                 
-                <path id="SolArkaKapi" d="M 73,240 L 113,240 L 118,320 L 78,320 Z" fill="#d1d1d1" stroke="#000" stroke-width="1.5" />
-                <path id="SagArkaKapi" d="M 187,240 L 227,240 L 222,320 L 182,320 Z" fill="#d1d1d1" stroke="#000" stroke-width="1.5" />
+                <!-- Sol Arka Kapı -->
+                <path id="SolArkaKapi" d="M 70,255 L 112,255 L 118,330 L 75,330 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+                <!-- Sağ Arka Kapı -->
+                <path id="SagArkaKapi" d="M 230,255 L 188,255 L 182,330 L 225,330 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
                 
-                <path id="SolArkaCamur" d="M 68,330 L 100,330 L 95,420 L 65,420 Z" fill="#d1d1d1" stroke="#000" stroke-width="1.5" />
-                <path id="SagArkaCamur" d="M 200,330 L 232,330 L 235,420 L 205,420 Z" fill="#d1d1d1" stroke="#000" stroke-width="1.5" />
+                <!-- Sol Arka Çamurluk -->
+                <path id="SolArkaCamur" d="M 75,340 L 100,340 L 95,435 Q 60,420 65,345 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+                <!-- Sağ Arka Çamurluk -->
+                <path id="SagArkaCamur" d="M 225,340 L 200,340 L 205,435 Q 240,420 235,345 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
             </svg>
             <div style="margin-top:10px; font-family:sans-serif; font-weight:bold;">
                 <span style="color:#888;">⚪ Orijinal</span> | 
@@ -86,7 +95,7 @@ else:
         </div>
 
         <script>
-            const paths = document.querySelectorAll('path');
+            const paths = document.querySelectorAll('path[id]');
             paths.forEach(p => {
                 p.addEventListener('click', function() {
                     const colors = {
@@ -100,26 +109,21 @@ else:
             });
         </script>
         """
-        components.html(svg_html, height=550)
+        components.html(svg_html, height=580)
 
     # --- HESAPLAMA ---
     df = st.session_state.data
     z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
     baz = np.poly1d(z)(v_yil)
-    
-    # Not: JS'deki renk değişimi anlık olarak fiyata yansıması için Streamlit'in
-    # özel bir component yapısı gerekir. Şimdilik bu şık görseli manuel seçimle 
-    # birleştirip fiyata yansıtalım.
-    
     final_price = baz + (60000 if v_vites == "Otomatik" else 0) - (v_hasar * 0.2)
 
     st.markdown(f"""
         <div class='price-box'>
             <h1 style='color:#000; font-size:4rem; margin:0;'>{max(0, final_price):,.0f} TL</h1>
-            <p style='color:#FF0000; font-weight:800; margin:0;'>TAHMİNİ RAYİÇ DEĞER</p>
+            <p style='color:#FF0000; font-weight:800; margin:0;'>TAHMİNİ RAYİÇ BEDEL</p>
         </div>
     """, unsafe_allow_html=True)
 
-    if st.button("🔄 SIFIRLA VE BAŞTAN BAŞLA"):
+    if st.button("🔄 LİSTEYİ TEMİZLE VE BAŞTAN BAŞLA"):
         del st.session_state.data
         st.rerun()
