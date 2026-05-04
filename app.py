@@ -10,18 +10,42 @@ st.markdown("""
     <style>
     @import url('https://googleapis.com');
     
-    /* Arka Plan: Koyu Antrasit ve Gece Mavisi Gradyan */
+    /* Arka Plan */
     .stApp {
         background: radial-gradient(circle at top right, #1e2229, #0f1115) !important;
     }
 
-    /* Tüm Yazılar Beyaz ve Okunaklı (Koyu temaya uygun) */
-    h1, h2, h3, p, label, span, .stMarkdown, .stSelectbox, .stNumberInput, .stRadio {
+    /* Genel Metinler */
+    h1, h2, h3, p, span, .stMarkdown {
         color: #FFFFFF !important;
         font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
 
-    /* Kartlar: Şeffaf (Glassmorphism) ve Kırmızı Vurgulu */
+    /* --- OKUNURLUK DÜZELTMESİ (KM ve TRAMER İÇİN) --- */
+    /* Giriş kutularının etiketleri (Başlıkları) */
+    label {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        font-size: 0.9rem !important;
+        margin-bottom: 5px !important;
+    }
+
+    /* Kutuların içindeki rakamların rengini BEYAZ yapıyoruz */
+    input {
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important; /* Tarayıcı uyumluluğu için */
+        background-color: #262730 !important; /* Kutunun içini biraz daha gri yapalım */
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        font-weight: 600 !important;
+    }
+
+    /* Çoklu seçim (Boya/Değişen) kutuları */
+    .stMultiSelect div {
+        background-color: #262730 !important;
+        color: white !important;
+    }
+
+    /* Kartlar */
     .luxury-card {
         background: rgba(255, 255, 255, 0.05) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -32,7 +56,7 @@ st.markdown("""
         box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5), 0px 5px 0px #FF0000 !important;
     }
 
-    /* Fiyat Paneli: Parlayan Sarı */
+    /* Fiyat Paneli */
     .price-box {
         background: linear-gradient(135deg, #FFCC00 0%, #FFAA00 100%) !important;
         padding: 35px !important;
@@ -42,15 +66,6 @@ st.markdown("""
         box-shadow: 0px 0px 20px rgba(255, 204, 0, 0.3);
     }
     
-    .price-label { 
-        color: #000000 !important; 
-        font-weight: 900 !important; 
-        letter-spacing: 2px !important; 
-        text-transform: uppercase;
-        margin-bottom: 5px !important;
-        opacity: 0.8;
-    }
-    
     .price-val { 
         color: #000000 !important; 
         font-size: 5rem !important; 
@@ -58,33 +73,19 @@ st.markdown("""
         line-height: 1 !important;
     }
 
-    /* Kırmızı Aksiyon Butonu */
+    /* Buton */
     .stButton>button {
         background: linear-gradient(90deg, #FF0000 0%, #B20000 100%) !important;
         color: white !important;
         font-weight: 900 !important;
         border-radius: 12px !important;
-        border: none !important;
         height: 3.8em !important;
         text-transform: uppercase !important;
-        box-shadow: 0px 4px 15px rgba(255, 0, 0, 0.3) !important;
-        transition: 0.3s !important;
-    }
-    
-    .stButton>button:hover {
-        transform: scale(1.02) !important;
-        box-shadow: 0px 6px 20px rgba(255, 0, 0, 0.5) !important;
-    }
-
-    /* Input Alanlarını Koyu Temaya Uydurma */
-    input, .stSelectbox > div {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        color: white !important;
-        border-radius: 10px !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
+# --- VERİ İŞLEME FONKSİYONU ---
 def veriyi_ayristir(metin):
     fiyatlar = [int(f.replace(".", "")) for f in re.findall(r"([\d\.]+)\s*TL", metin)]
     yillar = [int(y) for y in re.findall(r"\b(20[0-2][0-9])\b", metin)]
@@ -107,7 +108,7 @@ st.markdown("<p style='text-align: center; color: #FF0000 !important; font-weigh
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
     st.markdown("<h3 style='margin-top:0;'>📋 İlan Listesi Girişi</h3>", unsafe_allow_html=True)
-    raw_input = st.text_area("", height=200, placeholder="Verileri buraya aktarın...")
+    raw_input = st.text_area("", height=200, placeholder="Sahibinden metnini buraya yapıştırın...")
     if st.button("🚀 ANALİZİ BAŞLAT"):
         if raw_input:
             temp_df = veriyi_ayristir(raw_input)
@@ -126,7 +127,7 @@ else:
             v_km = st.number_input("KİLOMETRE", value=50000, step=5000)
             v_vites = st.radio("ŞANZIMAN", ["Otomatik", "Manuel"], horizontal=True)
         with col2:
-            v_hasar = st.number_input("TRAMER (TL)", value=0)
+            v_hasar = st.number_input("TRAMER (TL)", value=0, step=1000)
             v_boya = st.multiselect("🎨 BOYALI", ["Kaput", "Tavan", "Bagaj", "Yanlar"])
             v_degisen = st.multiselect("🛠️ DEĞİŞEN", ["Kaput", "Bagaj", "Kapı", "Çamurluk"])
         
@@ -144,20 +145,18 @@ else:
 
         z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
         baz_fiyat = np.poly1d(z)(v_yil)
-        
         km_ort = yil_verisi["KM"].mean() if not yil_verisi.empty else df["KM"].mean()
         km_bonusu = (km_ort - v_km) * final_katsayi
         
         final_price = (baz_fiyat * 1.05) + km_bonusu + (65000 if v_vites == "Otomatik" else -15000) - (v_hasar * 0.18 + len(v_boya)*8500 + len(v_degisen)*19000)
 
-        # --- SONUÇ ---
         st.markdown(f"""
             <div class='price-box'>
-                <p class='price-label'>Tahmini Rayiç Değer</p>
+                <p style='color:#000000; font-weight:900; letter-spacing:2px; text-transform:uppercase; margin-bottom:5px; opacity:0.8;'>Tahmini Rayiç Değer</p>
                 <h1 class='price-val'>{max(0, final_price):,.0f} TL</h1>
             </div>
         """, unsafe_allow_html=True)
 
-    if st.button("🔄 YENİ ANALİZ"):
+    if st.button("🔄 LİSTEYİ SIFIRLA"):
         del st.session_state.data
         st.rerun()
