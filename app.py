@@ -2,110 +2,123 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
-import urllib.parse
 
-# --- TEMA VE TASARIM AYARLARI ---
-st.set_page_config(page_title="OTO-DEĞER | Görsel Ekspertiz", layout="centered")
+# --- TEMA AYARLARI ---
+st.set_page_config(page_title="OTO-DEĞER | İnteraktif Ekspertiz", layout="wide")
 
 st.markdown("""
     <style>
     @import url('https://googleapis.com');
     .stApp { background-color: #FFFFFF; }
+    
+    /* Şema Butonları Tasarımı */
+    .stButton>button {
+        border-radius: 8px;
+        border: 2px solid #000;
+        font-weight: 800;
+        font-size: 0.7rem;
+        height: 45px;
+        width: 100%;
+        transition: 0.2s;
+    }
     .luxury-card {
-        background: #FFFFFF; border: 3px solid #000000; border-radius: 20px;
-        padding: 30px; margin-bottom: 25px; box-shadow: 10px 10px 0px #FF0000;
+        background: #FFFFFF; border: 3px solid #000; border-radius: 20px;
+        padding: 20px; box-shadow: 6px 6px 0px #FF0000;
     }
     .price-box {
-        background-color: #FFCC00; padding: 20px; border-radius: 15px;
-        border: 4px solid #000000; text-align: center; margin: 20px 0; box-shadow: 8px 8px 0px #FF0000;
+        background-color: #FFCC00; border: 4px solid #000;
+        border-radius: 15px; text-align: center; box-shadow: 6px 6px 0px #FF0000;
+        padding: 20px; margin-top: 20px;
     }
-    .price-val { color: #000000; font-size: 4rem; font-weight: 900; margin: 0; }
-    
-    /* Araç Şeması CSS */
-    .car-container { text-align: center; margin-top: 20px; position: relative; }
-    .svg-car { width: 300px; height: auto; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- VERİ ANALİZ MOTORU ---
+# --- VERİ ANALİZİ ---
 def veriyi_ayristir(metin):
     fiyatlar = [int(f.replace(".", "")) for f in re.findall(r"([\d\.]+)\s*TL", metin)]
     yillar = [int(y) for y in re.findall(r"\b(20[0-2][0-9])\b", metin)]
     limit = min(len(fiyatlar), len(yillar))
     return pd.DataFrame({"Yıl": yillar[:limit], "Fiyat": fiyatlar[:limit]}).drop_duplicates()
 
-# --- ŞEMA PARÇALARI ---
-parca_haritasi = {
-    "Kaput": "M 100,50 L 200,50 L 190,120 L 110,120 Z",
-    "Tavan": "M 115,150 L 185,150 L 180,230 L 120,230 Z",
-    "Bagaj": "M 110,310 L 190,310 L 200,380 L 100,380 Z",
-    "Sol Ön Çamur.": "M 60,60 L 90,60 L 100,120 L 70,120 Z",
-    "Sağ Ön Çamur.": "M 210,60 L 240,60 L 230,120 L 200,120 Z",
-    "Sol Ön Kapı": "M 75,130 L 105,130 L 110,210 L 80,210 Z",
-    "Sağ Ön Kapı": "M 195,130 L 225,130 L 220,210 L 190,210 Z",
-    "Sol Arka Kapı": "M 80,220 L 110,220 L 115,290 L 85,290 Z",
-    "Sağ Arka Kapı": "M 190,220 L 220,220 L 215,290 L 185,290 Z",
-    "Sol Arka Çamur.": "M 70,300 L 100,300 L 90,370 L 60,370 Z",
-    "Sağ Arka Çamur.": "M 200,300 L 230,300 L 240,370 L 210,370 Z"
-}
-
-# --- HEADER ---
-st.markdown("<h1 style='text-align: center; font-size: 4rem;'>OTO-<span style='color:#FF0000'>DEĞER</span></h1>", unsafe_allow_html=True)
+# --- BAŞLIK ---
+st.markdown("<h1 style='text-align: center; color: #000;'>OTO-<span style='color:#FF0000'>DEĞER</span></h1>", unsafe_allow_html=True)
 
 if 'data' not in st.session_state:
-    st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    raw_input = st.text_area("📋 İlan Verilerini Yapıştır", height=200)
-    if st.button("🚀 PİYASAYI ÇÖZ"):
+    raw_input = st.text_area("📋 İlan Verilerini Yapıştır", height=150)
+    if st.button("🚀 PİYASAYI ANALİZ ET"):
         if raw_input:
             st.session_state.data = veriyi_ayristir(raw_input)
+            st.session_state.ekspertiz = {} # Ekspertiz verisini başlat
             st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 else:
-    # --- DETAY FORMU ---
-    st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("visual_form"):
-        col1, col2 = st.columns(2)
-        with col1:
-            v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
-            v_vites = st.radio("ŞANZIMAN", ["Otomatik", "Manuel"], horizontal=True)
-            v_hasar = st.number_input("TRAMER (TL)", value=0)
-        with col2:
-            v_boya = st.multiselect("🎨 BOYA (Sarı)", list(parca_haritasi.keys()))
-            v_degisen = st.multiselect("🛠️ DEĞİŞEN (Kırmızı)", list(parca_haritasi.keys()))
-            v_renk = st.selectbox("DIŞ RENK", ["Standart", "Lansman Rengi (+)", "Özel Renk (++)"])
-        
-        submit = st.form_submit_button("💰 HESAPLA VE ŞEMAYI ÇİZ")
+    # --- İNTERAKTİF ŞEMA ALANI ---
+    df = st.session_state.data
+    
+    col_input, col_car = st.columns([0.3, 0.7])
 
-    if submit:
-        # Hesaplama Motoru (Dengeli Mod)
-        df = st.session_state.data
-        z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
-        baz = np.poly1d(z)(v_yil)
-        
-        boya_kaybi = sum([20000 if p in ["Tavan", "Kaput"] else 10000 for p in v_boya])
-        degisen_kaybi = sum([45000 if p in ["Tavan", "Kaput"] else 25000 for p in v_degisen])
-        final_price = baz + (60000 if v_vites == "Otomatik" else 0) - (v_hasar*0.2 + boya_kaybi + degisen_kaybi)
-
-        # GÖRSEL ŞEMA ÇİZİMİ (SVG)
-        svg_code = f'<svg viewBox="0 0 300 450" class="svg-car" xmlns="http://w3.org">'
-        # Arka plan hatları
-        svg_code += '<rect x="50" y="20" width="200" height="410" rx="40" fill="none" stroke="#ddd" stroke-width="2"/>'
-        
-        for parca, path in parca_haritasi.items():
-            color = "#EEEEEE" # Varsayılan gri
-            if parca in v_degisen: color = "#FF0000" # Kırmızı
-            elif parca in v_boya: color = "#FFCC00" # Sarı
-            svg_code += f'<path d="{path}" fill="{color}" stroke="#000" stroke-width="1.5" />'
-        
-        svg_code += '</svg>'
-        
-        st.markdown("<div class='car-container'>", unsafe_allow_html=True)
-        st.write("### 🚗 EKSPERTİZ GÖRÜNÜMÜ")
-        st.markdown(svg_code, unsafe_allow_html=True)
+    with col_input:
+        st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
+        v_yil = st.selectbox("MODEL YILI", sorted(df["Yıl"].unique(), reverse=True))
+        v_vites = st.radio("ŞANZIMAN", ["Otomatik", "Manuel"], horizontal=True)
+        v_hasar = st.number_input("TRAMER (TL)", value=0)
+        st.write("---")
+        st.write("🎨 **Renk Seçimi**")
+        mod = st.radio("İşaretleme Modu", ["Boyalı (Sarı)", "Değişen (Kırmızı)", "Orijinal (Gri)"], horizontal=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown(f"<div class='price-box'><p class='price-val'>{max(0, final_price):,.0f} TL</p></div>", unsafe_allow_html=True)
+    with col_car:
+        st.write("### 🚗 Araç Şeması (İşaretlemek için parçaya tıkla)")
+        
+        # Parçaları araba formunda dizelim (Kuş bakışı simülasyonu)
+        # ÖN KISIM
+        c1, c2, c3 = st.columns([1, 2, 1])
+        with c1: 
+            if st.button("Sol Ön Çam."): st.session_state.ekspertiz["Sol Ön Çamur."] = mod
+        with c2: 
+            if st.button("KAPUT"): st.session_state.ekspertiz["Kaput"] = mod
+        with c3: 
+            if st.button("Sağ Ön Çam."): st.session_state.ekspertiz["Sağ Ön Çamur."] = mod
 
-    if st.button("🔄 BAŞTAN BAŞLA"):
+        # ORTA KISIM
+        c4, c5, c6 = st.columns([1, 2, 1])
+        with c4: 
+            if st.button("Sol Ön Kapı"): st.session_state.ekspertiz["Sol Ön Kapı"] = mod
+            if st.button("Sol Arka Kapı"): st.session_state.ekspertiz["Sol Arka Kapı"] = mod
+        with c5: 
+            if st.button("TAVAN"): st.session_state.ekspertiz["Tavan"] = mod
+        with c6: 
+            if st.button("Sağ Ön Kapı"): st.session_state.ekspertiz["Sağ Ön Kapı"] = mod
+            if st.button("Sağ Arka Kapı"): st.session_state.ekspertiz["Sağ Arka Kapı"] = mod
+
+        # ARKA KISIM
+        c7, c8, c9 = st.columns([1, 2, 1])
+        with c7: 
+            if st.button("Sol Arka Çam."): st.session_state.ekspertiz["Sol Arka Çamur."] = mod
+        with c8: 
+            if st.button("BAGAJ"): st.session_state.ekspertiz["Bagaj Kapağı"] = mod
+        with c9: 
+            if st.button("Sağ Arka Çam."): st.session_state.ekspertiz["Sağ Arka Çamur."] = mod
+
+    # --- HESAPLAMA VE GÖSTERİM ---
+    boya_count = sum(1 for v in st.session_state.ekspertiz.values() if "Boyalı" in v)
+    degisen_count = sum(1 for v in st.session_state.ekspertiz.values() if "Değişen" in v)
+    
+    z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
+    baz = np.poly1d(z)(v_yil)
+    
+    # Hesaplama (Boya başına 12k, Değişen başına 25k, Tramer %20)
+    kesinti = (v_hasar * 0.2) + (boya_count * 12000) + (degisen_count * 25000)
+    final_price = baz + (60000 if v_vites == "Otomatik" else 0) - kesinti
+
+    st.markdown(f"""
+        <div class='price-box'>
+            <p style='color:#FF0000; font-weight:800; margin:0;'>RAYİÇ BEDEL</p>
+            <h1 style='color:#000; font-size:4rem; margin:0;'>{max(0, final_price):,.0f} TL</h1>
+            <p style='color:#555; font-size:0.8rem;'>{boya_count} Boya | {degisen_count} Değişen İşaretlendi</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    if st.button("🔄 SIFIRLA VE BAŞTAN BAŞLA"):
         del st.session_state.data
+        del st.session_state.ekspertiz
         st.rerun()
