@@ -10,13 +10,13 @@ st.markdown("""
     <style>
     @import url('https://googleapis.com');
     
-    /* Ana Arka Plan: Koyu ve Zengin */
+    /* Ana Arka Plan */
     .stApp {
         background-color: #000000 !important;
         background-image: radial-gradient(circle at 50% 20%, #1a1a2e 0%, #000000 70%) !important;
     }
 
-    /* Başlık Fontu: Bİ'EDERİ */
+    /* Başlık Fontu */
     h1 {
         font-family: 'Plus Jakarta Sans', sans-serif !important;
         letter-spacing: -2px !important;
@@ -33,72 +33,71 @@ st.markdown("""
         margin-bottom: 30px !important;
         backdrop-filter: blur(15px);
         box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-        border-left: 6px solid #FF0000 !important; /* Sol tarafa agresif kırmızı şerit */
+        border-left: 6px solid #FF0000 !important;
     }
 
-    /* OKUNURLUK DÜZELTMESİ: Giriş Kutuları */
-    input, [data-testid="stNumberInput"] input {
-        color: #FFFFFF !important;
+    /* --- GİRİŞ KUTULARI DÜZELTME (Siyah Kutuyu Kaldıran Kısım) --- */
+    /* Sayı Girişleri ve Selectbox Konteynırı */
+    div[data-baseweb="select"], div[data-baseweb="input"], .stNumberInput input {
         background-color: #0a0a0a !important;
+        border-radius: 12px !important;
         border: 1px solid #333 !important;
-        border-bottom: 2px solid #FFCC00 !important; /* Alt çizgi sarı neon */
+        border-bottom: 2px solid #FFCC00 !important;
+    }
+
+    /* Seçim kutusunun içindeki siyahlıkları ve kutucukları temizle */
+    div[role="listbox"] {
+        background-color: #111 !important;
+        color: white !important;
+    }
+
+    input {
+        color: #FFFFFF !important;
         font-family: 'Plus Jakarta Sans', sans-serif !important;
         font-weight: 800 !important;
-        font-size: 1.2rem !important;
-        padding: 12px !important;
+        font-size: 1.1rem !important;
     }
 
-    /* Giriş Başlıkları */
     label {
         color: #FFFFFF !important;
         font-weight: 800 !important;
         text-transform: uppercase !important;
         letter-spacing: 1px !important;
         font-size: 0.8rem !important;
-        opacity: 0.8;
     }
 
-    /* FİYAT PANELİ: Altın Sarısı ve Parlak */
+    /* FİYAT PANELİ */
     .price-box {
         background: linear-gradient(135deg, #FFCC00 0%, #FFAA00 100%) !important;
         padding: 45px !important;
         border-radius: 30px !important;
         text-align: center !important;
         margin: 30px 0 !important;
-        border: 3px solid #000000 !important;
+        border: 2px solid #000000 !important;
         box-shadow: 0 0 40px rgba(255, 204, 0, 0.4);
     }
     
     .price-val { 
         color: #000000 !important; 
         font-family: 'Orbitron', sans-serif !important;
-        font-size: 5.5rem !important; 
+        font-size: 5rem !important; 
         font-weight: 900 !important; 
         line-height: 1 !important;
     }
 
-    /* ANA BUTON: "DEĞERİNİ ÖĞREN" */
+    /* BUTON */
     .stButton>button {
         background: linear-gradient(90deg, #FF0000 0%, #B20000 100%) !important;
         color: white !important;
         font-weight: 900 !important;
-        font-size: 1.2rem !important;
         border-radius: 20px !important;
         height: 4em !important;
         border: none !important;
-        box-shadow: 0 10px 30px rgba(255, 0, 0, 0.4) !important;
-        transition: 0.3s !important;
         text-transform: uppercase !important;
-    }
-    
-    .stButton>button:hover {
-        transform: translateY(-4px) !important;
-        box-shadow: 0 15px 40px rgba(255, 0, 0, 0.6) !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- VERİ ANALİZİ ---
 def veriyi_ayristir(metin):
     fiyatlar = [int(f.replace(".", "")) for f in re.findall(r"([\d\.]+)\s*TL", metin)]
     yillar = [int(y) for y in re.findall(r"\b(20[0-2][0-9])\b", metin)]
@@ -112,14 +111,14 @@ def veriyi_ayristir(metin):
     if limit == 0: return pd.DataFrame()
     return pd.DataFrame({"Yıl": yillar[:limit], "Fiyat": fiyatlar[:limit], "KM": kms[:limit]}).drop_duplicates()
 
-# --- HEADER: Bİ'EDERİ ---
+# --- HEADER ---
 st.markdown("<br><h1 style='text-align: center; font-size: 5rem;'>Bİ'<span style='color:#FF0000'>EDERİ</span></h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #FFCC00; font-weight: 800; letter-spacing: 5px; margin-top:-25px;'>GERÇEK DEĞERİNİ ÖĞRENİN</p>", unsafe_allow_html=True)
 
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
     st.markdown("<h3 style='margin-top:0; color:#FFF;'>📊 Pazar Verilerini Aktarın</h3>", unsafe_allow_html=True)
-    raw_input = st.text_area("", height=200, placeholder="İlanları buraya kopyalayın...")
+    raw_input = st.text_area("", height=200, placeholder="İlanları kopyalayın...")
     if st.button("ANALİZİ BAŞLAT"):
         if raw_input:
             temp_df = veriyi_ayristir(raw_input)
@@ -128,9 +127,8 @@ if 'data' not in st.session_state:
                 st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 else:
-    # --- FORM ---
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("main_form"):
+    with st.form("clean_form"):
         st.markdown("<h3 style='margin-top:0; color:#FF0000;'>📋 Araç Detayları</h3>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
@@ -155,7 +153,6 @@ else:
         
         final_price = (baz * 1.05) + (km_ort - v_km) * katsayi + (65000 if v_vites == "Otomatik" else -15000) - (v_hasar * 0.18 + len(v_boya)*9000 + len(v_degisen)*22000)
 
-        # --- SONUÇ ---
         st.markdown(f"""
             <div class='price-box'>
                 <p style='color:#000000; font-weight:800; letter-spacing:2px; opacity:0.7;'>TAHMİNİ SATIŞ FİYATI</p>
