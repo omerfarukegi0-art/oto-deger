@@ -5,7 +5,7 @@ import re
 import streamlit.components.v1 as components
 
 # --- TEMA VE TASARIM ---
-st.set_page_config(page_title="OTO-DEĞER | Pro Ekspertiz", layout="wide")
+st.set_page_config(page_title="OTO-DEĞER | Ekspertiz", layout="wide")
 
 st.markdown("""
     <style>
@@ -49,46 +49,55 @@ else:
         v_vites = st.radio("ŞANZIMAN", ["Otomatik", "Manuel"], horizontal=True)
         v_hasar = st.number_input("TRAMER (TL)", value=0)
         st.divider()
-        st.info("💡 Sağdaki araç şemasında parçaların üzerine tıklayarak durumlarını değiştirebilirsin.")
+        st.info("💡 Şemada parçaların üzerine tıklayarak durumlarını değiştirebilirsin.")
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col_car:
-        # GERÇEKÇİ ARABA SİLUETİ (SVG)
+        # SAHİBİNDEN STYLE REALISTIC SVG
         svg_html = """
         <div style="text-align:center;">
             <svg viewBox="0 0 300 500" width="380" xmlns="http://w3.org" style="cursor:pointer; user-select:none;">
-                <!-- Araba Dış Hat (Gövde) -->
-                <path d="M 80,50 Q 150,20 220,50 L 235,120 L 245,250 L 235,380 L 220,450 Q 150,480 80,450 L 65,380 L 55,250 L 65,120 Z" fill="#f0f0f0" stroke="#ccc" stroke-width="2"/>
+                <!-- Ana Gövde Silüeti -->
+                <path d="M 85,40 Q 150,15 215,40 L 225,100 L 245,250 L 225,400 L 215,460 Q 150,485 85,460 L 75,400 L 55,250 L 75,100 Z" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
                 
-                <!-- Kaput -->
-                <path id="Kaput" d="M 95,65 L 205,65 Q 200,140 195,150 L 105,150 Q 100,140 95,65" fill="#d1d1d1" stroke="#333" stroke-width="1.5" />
+                <!-- Kaput (Aerodinamik Hatlar) -->
+                <path id="Kaput" d="M 100,55 Q 150,45 200,55 L 205,145 Q 150,155 95,145 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.5" />
+                
+                <!-- Ön Cam / Panel -->
+                <path d="M 105,155 L 195,155 L 200,175 L 100,175 Z" fill="#333" opacity="0.1"/>
+
                 <!-- Tavan -->
-                <path id="Tavan" d="M 110,170 L 190,170 Q 185,280 180,290 L 120,290 Q 115,280 110,170" fill="#d1d1d1" stroke="#333" stroke-width="1.5" />
+                <path id="Tavan" d="M 110,185 L 190,185 Q 195,270 190,300 L 110,300 Q 105,270 110,185" fill="#d1d1d1" stroke="#333" stroke-width="1.5" />
+                
                 <!-- Bagaj -->
-                <path id="Bagaj" d="M 105,340 L 195,340 L 205,430 Q 150,450 95,430 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.5" />
+                <path id="Bagaj" d="M 105,365 L 195,365 Q 210,450 150,460 Q 90,450 105,365" fill="#d1d1d1" stroke="#333" stroke-width="1.5" />
                 
                 <!-- Sol Ön Çamurluk -->
-                <path id="SolOnCamur" d="M 60,60 Q 85,55 90,65 L 100,150 L 65,155 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+                <path id="SolOnCamur" d="M 60,50 Q 80,45 90,55 L 100,145 L 65,150 Q 55,100 60,50" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
                 <!-- Sağ Ön Çamurluk -->
-                <path id="SagOnCamur" d="M 240,60 Q 215,55 210,65 L 200,150 L 235,155 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+                <path id="SagOnCamur" d="M 240,50 Q 220,45 210,55 L 200,145 L 235,150 Q 245,100 240,50" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
                 
                 <!-- Sol Ön Kapı -->
-                <path id="SolOnKapi" d="M 65,165 L 105,165 L 112,245 L 70,245 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+                <path id="SolOnKapi" d="M 68,160 L 105,160 L 108,245 L 70,245 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
                 <!-- Sağ Ön Kapı -->
-                <path id="SagOnKapi" d="M 235,165 L 195,165 L 188,245 L 230,245 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+                <path id="SagOnKapi" d="M 232,160 L 195,160 L 192,245 L 230,245 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
                 
                 <!-- Sol Arka Kapı -->
-                <path id="SolArkaKapi" d="M 70,255 L 112,255 L 118,330 L 75,330 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+                <path id="SolArkaKapi" d="M 70,250 L 108,250 L 112,325 L 72,325 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
                 <!-- Sağ Arka Kapı -->
-                <path id="SagArkaKapi" d="M 230,255 L 188,255 L 182,330 L 225,330 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+                <path id="SagArkaKapi" d="M 230,250 L 192,250 L 188,325 L 228,325 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
                 
                 <!-- Sol Arka Çamurluk -->
-                <path id="SolArkaCamur" d="M 75,340 L 100,340 L 95,435 Q 60,420 65,345 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+                <path id="SolArkaCamur" d="M 72,335 L 100,335 L 100,450 Q 60,440 68,335" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
                 <!-- Sağ Arka Çamurluk -->
-                <path id="SagArkaCamur" d="M 225,340 L 200,340 L 205,435 Q 240,420 235,345 Z" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+                <path id="SagArkaCamur" d="M 228,335 L 200,335 L 200,450 Q 240,440 232,335" fill="#d1d1d1" stroke="#333" stroke-width="1.2" />
+
+                <!-- Aynalar (Görsel Detay) -->
+                <rect x="45" y="150" width="15" height="5" rx="2" fill="#ccc"/>
+                <rect x="240" y="150" width="15" height="5" rx="2" fill="#ccc"/>
             </svg>
-            <div style="margin-top:10px; font-family:sans-serif; font-weight:bold;">
-                <span style="color:#888;">⚪ Orijinal</span> | 
+            <div style="margin-top:15px; font-family:sans-serif; font-weight:bold;">
+                <span style="color:#d1d1d1;">⚪ Orijinal</span> | 
                 <span style="color:#FFCC00;">🟡 Boyalı</span> | 
                 <span style="color:#FF0000;">🔴 Değişen</span>
             </div>
@@ -99,9 +108,9 @@ else:
             paths.forEach(p => {
                 p.addEventListener('click', function() {
                     const colors = {
-                        '#d1d1d1': '#FFCC00', // Gri -> Sarı
-                        '#FFCC00': '#FF0000', // Sarı -> Kırmızı
-                        '#FF0000': '#d1d1d1'  // Kırmızı -> Gri
+                        '#d1d1d1': '#FFCC00', 
+                        '#FFCC00': '#FF0000', 
+                        '#FF0000': '#d1d1d1'
                     };
                     const currentColor = this.getAttribute('fill');
                     this.setAttribute('fill', colors[currentColor] || '#d1d1d1');
@@ -109,7 +118,7 @@ else:
             });
         </script>
         """
-        components.html(svg_html, height=580)
+        components.html(svg_html, height=600)
 
     # --- HESAPLAMA ---
     df = st.session_state.data
