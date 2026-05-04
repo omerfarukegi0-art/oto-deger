@@ -4,16 +4,13 @@ import numpy as np
 import re
 import urllib.parse
 
-# --- TEMA AYARLARI ---
-st.set_page_config(page_title="OTO-DEĞER | Dengeli", layout="centered")
+# --- TEMA VE TASARIM AYARLARI ---
+st.set_page_config(page_title="OTO-DEĞER | Görsel Ekspertiz", layout="centered")
 
 st.markdown("""
     <style>
     @import url('https://googleapis.com');
     .stApp { background-color: #FFFFFF; }
-    h1, h2, h3, p, label, .stMarkdown, .stSelectbox, .stNumberInput, .stRadio {
-        color: #000000 !important; font-family: 'Plus Jakarta Sans', sans-serif;
-    }
     .luxury-card {
         background: #FFFFFF; border: 3px solid #000000; border-radius: 20px;
         padding: 30px; margin-bottom: 25px; box-shadow: 10px 10px 0px #FF0000;
@@ -22,24 +19,38 @@ st.markdown("""
         background-color: #FFCC00; padding: 20px; border-radius: 15px;
         border: 4px solid #000000; text-align: center; margin: 20px 0; box-shadow: 8px 8px 0px #FF0000;
     }
-    .price-val { color: #000000; font-size: 4.5rem; font-weight: 900; margin: 0; line-height: 1; }
-    .stButton>button {
-        background-color: #FF0000 !important; color: #FFFFFF !important;
-        font-weight: 800; border-radius: 10px; border: 3px solid #000000;
-    }
+    .price-val { color: #000000; font-size: 4rem; font-weight: 900; margin: 0; }
+    
+    /* Araç Şeması CSS */
+    .car-container { text-align: center; margin-top: 20px; position: relative; }
+    .svg-car { width: 300px; height: auto; }
     </style>
     """, unsafe_allow_html=True)
 
+# --- VERİ ANALİZ MOTORU ---
 def veriyi_ayristir(metin):
     fiyatlar = [int(f.replace(".", "")) for f in re.findall(r"([\d\.]+)\s*TL", metin)]
     yillar = [int(y) for y in re.findall(r"\b(20[0-2][0-9])\b", metin)]
     limit = min(len(fiyatlar), len(yillar))
     return pd.DataFrame({"Yıl": yillar[:limit], "Fiyat": fiyatlar[:limit]}).drop_duplicates()
 
-ekspertiz_parcalari = ["Kaput", "Tavan", "Bagaj Kapağı", "Sağ Ön Çamurluk", "Sağ Ön Kapı", "Sağ Arka Kapı", "Sağ Arka Çamurluk", "Sol Ön Çamurluk", "Sol Ön Kapı", "Sol Arka Kapı", "Sol Arka Çamurluk"]
+# --- ŞEMA PARÇALARI ---
+parca_haritasi = {
+    "Kaput": "M 100,50 L 200,50 L 190,120 L 110,120 Z",
+    "Tavan": "M 115,150 L 185,150 L 180,230 L 120,230 Z",
+    "Bagaj": "M 110,310 L 190,310 L 200,380 L 100,380 Z",
+    "Sol Ön Çamur.": "M 60,60 L 90,60 L 100,120 L 70,120 Z",
+    "Sağ Ön Çamur.": "M 210,60 L 240,60 L 230,120 L 200,120 Z",
+    "Sol Ön Kapı": "M 75,130 L 105,130 L 110,210 L 80,210 Z",
+    "Sağ Ön Kapı": "M 195,130 L 225,130 L 220,210 L 190,210 Z",
+    "Sol Arka Kapı": "M 80,220 L 110,220 L 115,290 L 85,290 Z",
+    "Sağ Arka Kapı": "M 190,220 L 220,220 L 215,290 L 185,290 Z",
+    "Sol Arka Çamur.": "M 70,300 L 100,300 L 90,370 L 60,370 Z",
+    "Sağ Arka Çamur.": "M 200,300 L 230,300 L 240,370 L 210,370 Z"
+}
 
-st.markdown("<h1 style='text-align: center; font-size: 5rem; margin-bottom:0;'>OTO-<span style='color:#FF0000'>DEĞER</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #FF0000; font-weight: 900; font-size: 1.2rem; margin-top:-20px;'>🏁 DENGELİ PİYASA ANALİZİ</p>", unsafe_allow_html=True)
+# --- HEADER ---
+st.markdown("<h1 style='text-align: center; font-size: 4rem;'>OTO-<span style='color:#FF0000'>DEĞER</span></h1>", unsafe_allow_html=True)
 
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
@@ -50,61 +61,50 @@ if 'data' not in st.session_state:
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 else:
+    # --- DETAY FORMU ---
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("dengeli_form"):
-        st.markdown("<h3 style='margin-top:0;'>🔍 Araç Durumu</h3>", unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        with c1:
+    with st.form("visual_form"):
+        col1, col2 = st.columns(2)
+        with col1:
             v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
             v_vites = st.radio("ŞANZIMAN", ["Otomatik", "Manuel"], horizontal=True)
-            v_renk = st.selectbox("DIŞ RENK", ["Standart", "Lansman Rengi (+)", "Özel Renk (++)"])
-        with c2:
             v_hasar = st.number_input("TRAMER (TL)", value=0)
-            v_boya = st.multiselect("🎨 BOYA", ekspertiz_parcalari)
-            v_degisen = st.multiselect("🛠️ DEĞİŞEN", ekspertiz_parcalari)
+        with col2:
+            v_boya = st.multiselect("🎨 BOYA (Sarı)", list(parca_haritasi.keys()))
+            v_degisen = st.multiselect("🛠️ DEĞİŞEN (Kırmızı)", list(parca_haritasi.keys()))
+            v_renk = st.selectbox("DIŞ RENK", ["Standart", "Lansman Rengi (+)", "Özel Renk (++)"])
         
-        submit = st.form_submit_button("💰 HESAPLA")
+        submit = st.form_submit_button("💰 HESAPLA VE ŞEMAYI ÇİZ")
 
     if submit:
+        # Hesaplama Motoru (Dengeli Mod)
         df = st.session_state.data
         z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
-        baz_fiyat = np.poly1d(z)(v_yil)
+        baz = np.poly1d(z)(v_yil)
         
-        # --- YENİ DENGELİ HESAPLAMA MOTORU ---
-        # 1. Hatasızlık Bonusu (Eğer araç tertemizse ortalamayı %4 yukarı çeker)
-        bonus = baz_fiyat * 0.04 if (not v_boya and not v_degisen and v_hasar == 0) else 0
+        boya_kaybi = sum([20000 if p in ["Tavan", "Kaput"] else 10000 for p in v_boya])
+        degisen_kaybi = sum([45000 if p in ["Tavan", "Kaput"] else 25000 for p in v_degisen])
+        final_price = baz + (60000 if v_vites == "Otomatik" else 0) - (v_hasar*0.2 + boya_kaybi + degisen_kaybi)
+
+        # GÖRSEL ŞEMA ÇİZİMİ (SVG)
+        svg_code = f'<svg viewBox="0 0 300 450" class="svg-car" xmlns="http://w3.org">'
+        # Arka plan hatları
+        svg_code += '<rect x="50" y="20" width="200" height="410" rx="40" fill="none" stroke="#ddd" stroke-width="2"/>'
         
-        # 2. Renk Etkisi
-        renk_farki = {"Standart": 0, "Lansman Rengi (+)": 15000, "Özel Renk (++)": 30000}[v_renk]
+        for parca, path in parca_haritasi.items():
+            color = "#EEEEEE" # Varsayılan gri
+            if parca in v_degisen: color = "#FF0000" # Kırmızı
+            elif parca in v_boya: color = "#FFCC00" # Sarı
+            svg_code += f'<path d="{path}" fill="{color}" stroke="#000" stroke-width="1.5" />'
         
-        # 3. Şanzıman (Baz fiyata göre dengeleme)
-        vites_farki = 45000 if v_vites == "Otomatik" else -15000
+        svg_code += '</svg>'
         
-        # 4. Ekspertiz Düzeltmesi (Yumuşatılmış Katsayılar)
-        tramer_etkisi = v_hasar * 0.15 # Tramerin sadece %15'i fiyata eksi yazar
-        kritik = ["Tavan", "Kaput"]
-        # Normal parçalar 7 bin, kritik parçalar 15 bin TL düşer (Daha insafı rakamlar)
-        boya_etkisi = sum([15000 if p in kritik else 7000 for p in v_boya])
-        degisen_etkisi = sum([30000 if p in kritik else 15000 for p in v_degisen])
-        
-        final_price = baz_fiyat + bonus + renk_farki + vites_farki - (tramer_etkisi + boya_etkisi + degisen_etkisi)
+        st.markdown("<div class='car-container'>", unsafe_allow_html=True)
+        st.write("### 🚗 EKSPERTİZ GÖRÜNÜMÜ")
+        st.markdown(svg_code, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
         st.markdown(f"<div class='price-box'><p class='price-val'>{max(0, final_price):,.0f} TL</p></div>", unsafe_allow_html=True)
-
-        # WHATSAPP
-        paylasim = f"*OTO-DEĞER RAPORU*\n🚗 Yıl: {v_yil}\n💰 Değer: {max(0, final_price):,.0f} TL\n🛠️ Ekspertiz: {len(v_boya)} Boya / {len(v_degisen)} Değişen"
-        st.markdown(f'<a href="https://wa.me{urllib.parse.quote(paylasim)}" target="_blank"><button style="width:100%; background-color:#25D366; color:white; border:none; border-radius:10px; padding:10px; font-weight:800; cursor:pointer; margin-bottom:20px;">📱 WHATSAPP İLE PAYLAŞ</button></a>', unsafe_allow_html=True)
-
-        st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-        res = [
-            ("Pazar Rayiç Bedeli", f"{baz_fiyat:,.0f} TL"),
-            ("Kondisyon Primi", f"{bonus:+,.0f} TL"),
-            ("Ekspertiz Düzeltmesi", f"- ( {tramer_etkisi + boya_etkisi + degisen_etkisi:,.0f} ) TL"),
-            ("Acil Satış Bedeli", f"{(final_price * 0.94):,.0f} TL")
-        ]
-        for label, val in res:
-            st.markdown(f"<div style='display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee;'><span style='color:#FF0000; font-weight:800;'>{label}</span><span style='font-weight:700;'>{val}</span></div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
 
     if st.button("🔄 BAŞTAN BAŞLA"):
         del st.session_state.data
