@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import re
 
-# --- PRESTİJ AYARLARI ---
+# --- SAYFA AYARLARI ---
 st.set_page_config(page_title="Bİ'EDERİ | Değerini Öğren", layout="centered")
 
 st.markdown("""
@@ -16,7 +16,7 @@ st.markdown("""
         background-image: radial-gradient(circle at 50% 20%, #1a1a2e 0%, #000000 70%) !important;
     }
 
-    /* Başlık Fontu */
+    /* Başlık */
     h1 {
         font-family: 'Plus Jakarta Sans', sans-serif !important;
         letter-spacing: -2px !important;
@@ -26,7 +26,7 @@ st.markdown("""
 
     /* Kart Tasarımı */
     .luxury-card {
-        background: rgba(255, 255, 255, 0.05) !important;
+        background: rgba(255, 255, 255, 0.03) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 30px !important;
         padding: 40px !important;
@@ -36,26 +36,33 @@ st.markdown("""
         border-left: 6px solid #FF0000 !important;
     }
 
-    /* --- GİRİŞ KUTULARI DÜZELTME (Siyah Kutuyu Kaldıran Kısım) --- */
-    /* Sayı Girişleri ve Selectbox Konteynırı */
-    div[data-baseweb="select"], div[data-baseweb="input"], .stNumberInput input {
-        background-color: #0a0a0a !important;
+    /* --- SİYAH KUTUCUKLARI SİLEN KESİN ÇÖZÜM --- */
+    /* Tüm input ve selectbox alanlarını temizle */
+    div[data-baseweb="select"], 
+    div[data-baseweb="input"], 
+    .stNumberInput div, 
+    .stSelectbox div {
+        background-color: transparent !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    /* Gerçek giriş alanlarının stilini belirle */
+    input, div[role="combobox"] {
+        background-color: #111111 !important;
+        color: #FFFFFF !important;
         border-radius: 12px !important;
         border: 1px solid #333 !important;
-        border-bottom: 2px solid #FFCC00 !important;
-    }
-
-    /* Seçim kutusunun içindeki siyahlıkları ve kutucukları temizle */
-    div[role="listbox"] {
-        background-color: #111 !important;
-        color: white !important;
-    }
-
-    input {
-        color: #FFFFFF !important;
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
+        border-bottom: 2px solid #FFCC00 !important; /* Alt neon şerit */
+        padding: 12px !important;
         font-weight: 800 !important;
-        font-size: 1.1rem !important;
+    }
+
+    /* Sayı girişindeki siyah kareleri ve butonları temizle */
+    .stNumberInput button {
+        background-color: #222 !important;
+        color: white !important;
+        border: 1px solid #444 !important;
     }
 
     label {
@@ -64,6 +71,7 @@ st.markdown("""
         text-transform: uppercase !important;
         letter-spacing: 1px !important;
         font-size: 0.8rem !important;
+        opacity: 0.7;
     }
 
     /* FİYAT PANELİ */
@@ -85,19 +93,23 @@ st.markdown("""
         line-height: 1 !important;
     }
 
-    /* BUTON */
+    /* ANA BUTON */
     .stButton>button {
         background: linear-gradient(90deg, #FF0000 0%, #B20000 100%) !important;
         color: white !important;
         font-weight: 900 !important;
+        font-size: 1.1rem !important;
         border-radius: 20px !important;
         height: 4em !important;
         border: none !important;
+        box-shadow: 0 10px 30px rgba(255, 0, 0, 0.4) !important;
+        transition: 0.3s !important;
         text-transform: uppercase !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
+# --- VERİ ANALİZİ ---
 def veriyi_ayristir(metin):
     fiyatlar = [int(f.replace(".", "")) for f in re.findall(r"([\d\.]+)\s*TL", metin)]
     yillar = [int(y) for y in re.findall(r"\b(20[0-2][0-9])\b", metin)]
@@ -118,7 +130,7 @@ st.markdown("<p style='text-align: center; color: #FFCC00; font-weight: 800; let
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
     st.markdown("<h3 style='margin-top:0; color:#FFF;'>📊 Pazar Verilerini Aktarın</h3>", unsafe_allow_html=True)
-    raw_input = st.text_area("", height=200, placeholder="İlanları kopyalayın...")
+    raw_input = st.text_area("", height=200, placeholder="İlanları buraya yapıştırın...")
     if st.button("ANALİZİ BAŞLAT"):
         if raw_input:
             temp_df = veriyi_ayristir(raw_input)
@@ -127,8 +139,9 @@ if 'data' not in st.session_state:
                 st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 else:
+    # --- FORM ---
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("clean_form"):
+    with st.form("perfection_form"):
         st.markdown("<h3 style='margin-top:0; color:#FF0000;'>📋 Araç Detayları</h3>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
@@ -153,6 +166,7 @@ else:
         
         final_price = (baz * 1.05) + (km_ort - v_km) * katsayi + (65000 if v_vites == "Otomatik" else -15000) - (v_hasar * 0.18 + len(v_boya)*9000 + len(v_degisen)*22000)
 
+        # --- SONUÇ ---
         st.markdown(f"""
             <div class='price-box'>
                 <p style='color:#000000; font-weight:800; letter-spacing:2px; opacity:0.7;'>TAHMİNİ SATIŞ FİYATI</p>
