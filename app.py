@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import re
 
-# --- SAYFA AYARLARI ---
+# --- PRESTİJ AYARLARI ---
 st.set_page_config(page_title="Bİ'EDERİ | Değerini Öğren", layout="centered")
 
 st.markdown("""
@@ -16,44 +16,46 @@ st.markdown("""
         background-image: radial-gradient(circle at 50% 20%, #1a1a2e 0%, #000000 70%) !important;
     }
 
-    /* 2. SİYAH KUTUCUKLARI SİLEN GLOBAL TEMİZLİK */
-    /* Giriş alanlarının etrafındaki tüm Streamlit gölgelerini ve arka planlarını öldürür */
+    /* 2. SİYAH KUTUCUKLARI SİLEN KESİN CSS (BASEWEB RESET) */
+    /* Giriş kutularının arkasındaki TÜM katmanları şeffaf yapar */
     div[data-baseweb="input"], 
     div[data-baseweb="select"], 
     div[data-baseweb="base-input"],
-    .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj, .st-ak { 
+    div[data-testid="stNumberInput"],
+    div[data-testid="stSelectbox"],
+    div[role="combobox"],
+    .st-ae, .st-af, .st-ag, .st-ah, .st-ai, .st-aj, .st-ak, .st-al, .st-am, .st-an { 
         background-color: transparent !important; 
+        background: transparent !important;
         border: none !important; 
         box-shadow: none !important;
     }
 
-    /* 3. MODERN GİRİŞ KUTUSU TASARIMI */
-    /* Gerçek yazı yazılan alanlar */
-    input, div[role="combobox"], [data-baseweb="select"] > div {
-        background-color: #111 !important;
+    /* Giriş alanının SADECE içindeki kutuyu boyar */
+    input, div[data-baseweb="select"] > div {
+        background-color: #111111 !important; /* Koyu antrasit iç dolgu */
         color: #FFFFFF !important;
         border: 1px solid #333 !important;
-        border-bottom: 2px solid #FFCC00 !important; /* Neon sarı alt çizgi */
+        border-bottom: 2px solid #FFCC00 !important; /* Altın sarısı neon çizgi */
         border-radius: 12px !important;
-        padding: 10px !important;
+        padding: 12px !important;
         font-family: 'Plus Jakarta Sans', sans-serif !important;
         font-weight: 800 !important;
     }
 
-    /* Sayı artırma-azaltma butonlarını şeffaf ve şık yap */
-    button[step] {
-        background-color: transparent !important;
+    /* Sayı girişindeki artı/eksi butonlarını görünür ve şık yap */
+    [data-testid="stNumberInput"] button {
+        background-color: #222 !important;
         color: white !important;
-        border: 1px solid #444 !important;
+        border-radius: 8px !important;
     }
 
-    /* 4. KART VE METİN STİLLERİ */
+    /* 3. KART VE METİN TASARIMI */
     .luxury-card {
         background: rgba(255, 255, 255, 0.03) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 30px !important;
         padding: 40px !important;
-        margin-bottom: 30px !important;
         backdrop-filter: blur(15px);
         box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         border-left: 6px solid #FF0000 !important;
@@ -65,6 +67,9 @@ st.markdown("""
         font-weight: 800 !important;
     }
 
+    label { font-size: 0.8rem !important; opacity: 0.7; letter-spacing: 1px; }
+
+    /* 4. FİYAT PANELİ */
     .price-box {
         background: linear-gradient(135deg, #FFCC00 0%, #FFAA00 100%) !important;
         padding: 40px !important;
@@ -107,7 +112,7 @@ st.markdown("<p style='text-align: center; color: #FFCC00; letter-spacing: 5px; 
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
     st.markdown("<h3 style='margin-top:0; color:#FFF;'>📊 Pazar Verilerini Aktarın</h3>", unsafe_allow_html=True)
-    raw_input = st.text_area("", height=200, placeholder="İlanları buraya yapıştırın...")
+    raw_input = st.text_area("", height=200, placeholder="İlanları kopyalayın...")
     if st.button("ANALİZİ BAŞLAT"):
         if raw_input:
             temp_df = veriyi_ayristir(raw_input)
@@ -117,7 +122,7 @@ if 'data' not in st.session_state:
     st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("final_form"):
+    with st.form("perfection_form"):
         st.markdown("<h3 style='margin-top:0; color:#FF0000;'>📋 Araç Detayları</h3>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
@@ -145,7 +150,7 @@ else:
         st.markdown(f"""
             <div class='price-box'>
                 <p style='color:#000000; font-weight:800; letter-spacing:2px; opacity:0.7;'>TAHMİNİ SATIŞ FİYATI</p>
-                <h1 style='color:#000; font-size:4.5rem; font-weight:900;'>{max(0, final_price):,.0f} TL</h1>
+                <h1 style='color:#000; font-size:4rem; font-weight:900;'>{max(0, final_price):,.0f} TL</h1>
             </div>
         """, unsafe_allow_html=True)
 
