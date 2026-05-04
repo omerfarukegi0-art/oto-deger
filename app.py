@@ -5,7 +5,7 @@ import re
 import urllib.parse
 
 # --- TEMA VE STİL ---
-st.set_page_config(page_title="OTO-DEĞER | Kesin Analiz", layout="centered")
+st.set_page_config(page_title="OTO-DEĞER | Dinamik Analiz", layout="centered")
 
 st.markdown("""
     <style>
@@ -22,7 +22,7 @@ st.markdown("""
         background-color: #FFCC00; padding: 25px; border-radius: 15px;
         border: 4px solid #000000; text-align: center; margin: 20px 0; box-shadow: 8px 8px 0px #FF0000;
     }
-    .price-val { color: #000000 !important; font-size: 4.5rem !important; font-weight: 900 !important; margin: 0 !important; line-height: 1 !important; }
+    .price-val { color: #000000 !important; font-size: 4rem; font-weight: 900; margin: 0; line-height: 1.1; }
     .stButton>button {
         background-color: #FF0000 !important; color: #FFFFFF !important;
         font-weight: 800; border-radius: 10px; border: 3px solid #000000; height: 3.5em; text-transform: uppercase;
@@ -35,7 +35,6 @@ def veriyi_ayristir(metin):
     fiyatlar = [int(f.replace(".", "")) for f in re.findall(r"([\d\.]+)\s*TL", metin)]
     yillar = [int(y) for y in re.findall(r"\b(20[0-2][0-9])\b", metin)]
     kms = []
-    # KM'leri çek ve fiyatlarla karışmasını engelle
     km_adaylari = re.findall(r"\b(\d{1,3}[\.,]\d{3})\b", metin)
     for k in km_adaylari:
         sayi = int(k.replace(".", "").replace(",", ""))
@@ -44,13 +43,12 @@ def veriyi_ayristir(metin):
     
     limit = min(len(fiyatlar), len(yillar), len(kms))
     if limit == 0: return pd.DataFrame()
-    
     df = pd.DataFrame({"Yıl": yillar[:limit], "Fiyat": fiyatlar[:limit], "KM": kms[:limit]})
     return df.drop_duplicates()
 
 # --- BAŞLIK ---
-st.markdown("<h1 style='text-align: center; font-size: 5rem; margin-bottom:0;'>OTO-<span style='color:#FF0000'>DEĞER</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #FF0000 !important; font-weight: 900; font-size: 1.2rem; margin-top:-20px;'>🏁 AKILLI PİYASA ALGORİTMASI</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; font-size: 4.5rem; margin-bottom:0;'>OTO-<span style='color:#FF0000'>DEĞER</span></h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #FF0000 !important; font-weight: 900; font-size: 1.1rem; margin-top:-20px;'>🏁 İLAN BAZLI DİNAMİK HESAPLAMA</p>", unsafe_allow_html=True)
 
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
@@ -63,68 +61,66 @@ if 'data' not in st.session_state:
                 st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 else:
-    with st.form("pro_form"):
+    with st.form("dynamic_form"):
         col1, col2 = st.columns(2)
         with col1:
             v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
-            v_km = st.number_input("MEVCUT KİLOMETRE", value=50000, step=5000)
+            v_km = st.number_input("ARACININ KİLOMETRESİ", value=50000, step=5000)
             v_vites = st.radio("ŞANZIMAN", ["Otomatik", "Manuel"], horizontal=True)
         with col2:
             v_hasar = st.number_input("TRAMER KAYDI (TL)", value=0)
-            v_boya = st.multiselect("🎨 BOYALI PARÇALAR", ["Kaput", "Tavan", "Bagaj", "Kapılar", "Çamurluklar"])
-            v_degisen = st.multiselect("🛠️ DEĞİŞEN PARÇALAR", ["Kaput", "Bagaj", "Kapı", "Çamurluk"])
+            v_boya = st.multiselect("🎨 BOYALI", ["Kaput", "Tavan", "Bagaj", "Yanlar"])
+            v_degisen = st.multiselect("🛠️ DEĞİŞEN", ["Kaput", "Bagaj", "Kapı", "Çamurluk"])
         
-        submit = st.form_submit_button("💰 HESAPLA")
+        submit = st.form_submit_button("💰 PİYASA ANALİZİYLE HESAPLA")
 
     if submit:
         df = st.session_state.data
         
-        # --- YENİ MATEMATİKSEL MODEL (GLOBAL HESAPLAMA) ---
-        # 1. Tüm veri setindeki KM ve Fiyat arasındaki ilişkiyi bulalım (KM başı kaç TL düşüyor?)
-        if len(df) > 5:
-            # Model yılı etkisini temizleyip saf KM etkisini bulmak için
-            # her yılın kendi içindeki KM/Fiyat oranına bakıyoruz.
-            km_katsayisi = -3.5 # Başlangıç tahmini (Her 1 KM = 3.5 TL düşüş)
-        else:
-            km_katsayisi = -3.0
-
-        # 2. Seçilen yılın piyasa ortalamasını bul
-        yil_verileri = df[df["Yıl"] == v_yil]
-        if not yil_verileri.empty:
-            yil_fiyat_ort = yil_verileri["Fiyat"].mean()
-            yil_km_ort = yil_verileri["KM"].mean()
-        else:
-            # O yıl yoksa genel trendden yılın baz fiyatını tahmin et
-            z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
-            yil_fiyat_ort = np.poly1d(z)(v_yil)
-            yil_km_ort = df["KM"].mean()
-
-        # 3. KM Düzeltmesi (Fiyatın saçmalamasını engelleyen ana formül)
-        # Senin KM'n ortalamadan düşükse fiyat ARTAR, yüksekse DÜŞER.
-        km_etkisi = (yil_km_ort - v_km) * abs(km_katsayisi)
+        # --- 1. DİNAMİK KM KATSAYISI HESAPLAMA ---
+        # Sadece seçilen yılın araçlarına bakarak pazarın "KM hassasiyetini" ölçer
+        yil_verisi = df[df["Yıl"] == v_yil]
         
-        # 4. Donanım ve Kondisyon
+        if len(yil_verisi) >= 2:
+            # Lineer Regresyon: Fiyat = (m * KM) + b -> Buradaki 'm' bizim dinamik katsayımızdır
+            X = yil_verisi["KM"]
+            y = yil_verisi["Fiyat"]
+            katsayi, sabit = np.polyfit(X, y, 1)
+            
+            # Eğer katsayı mantıksızsa (örn: km arttıkça fiyat artıyorsa), genel veriye bak
+            if katsayi >= 0:
+                katsayi, _ = np.polyfit(df["KM"], df["Fiyat"], 1)
+            
+            # Hala pozitifse (veri çok bozuksa) 3.5 fallback kullan
+            final_katsayi = abs(katsayi) if katsayi < 0 else 3.5
+        else:
+            # Yeterli veri yoksa genel veriden veya varsayılandan al
+            final_katsayi = 4.0 if v_yil > 2020 else 3.0
+
+        # --- 2. BAZ FİYAT VE DÜZELTME ---
+        z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
+        baz_fiyat = np.poly1d(z)(v_yil)
+        
+        # KM Etkisi (Dinamik katsayı ile)
+        km_ort = yil_verisi["KM"].mean() if not yil_verisi.empty else df["KM"].mean()
+        km_farki = km_ort - v_km
+        km_bonusu = km_farki * final_katsayi
+        
+        # Diğer kalemler
         vites_farki = 60000 if v_vites == "Otomatik" else -15000
-        tramer_kesintisi = v_hasar * 0.20
-        kaporta_kesintisi = (len(v_boya) * 12000) + (len(v_degisen) * 28000)
+        kesintiler = (v_hasar * 0.18) + (len(v_boya) * 10000) + (len(v_degisen) * 25000)
         
-        # Baz fiyatı 'Hatasız' seviyesine çekip üzerine ekleme yapıyoruz
-        hatasiz_baz = yil_fiyat_ort * 1.04 
-        final_price = hatasiz_baz + km_etkisi + vites_farki - (tramer_kesintisi + kaporta_kesintisi)
+        final_price = (baz_fiyat * 1.04) + km_bonusu + vites_farki - kesintiler
 
-        # MANTIK KONTROLÜ: KM düştükçe fiyat artmalı.
-        # Eğer bir şekilde formül ters teperse (veri azlığından), emsal ilanlardan destek al
-        emsaller = df[(df["Yıl"] == v_yil)].sort_values(by="KM")
-        if not emsaller.empty:
-            # Eğer 5.000 KM girdiysen, listedeki en düşük KM'li araçtan daha ucuz olamaz (hasar yoksa)
-            if v_km <= emsaller["KM"].min() and not v_boya and v_hasar == 0:
-                final_price = max(final_price, emsaller["Fiyat"].max())
-
+        # --- SONUÇ ---
         st.markdown(f"""
             <div class='price-box'>
-                <p class='price-label'>GÜNCEL PAZAR DEĞERİ</p>
+                <p style='color:#FF0000; font-weight:800; margin:0;'>HESAPLANAN PAZAR DEĞERİ</p>
                 <h1 class='price-val'>{max(0, final_price):,.0f} TL</h1>
-                <p style='margin:0; opacity:0.7; font-size:0.9rem;'>Piyasa Ortalaması ({v_yil}): {yil_fiyat_ort:,.0f} TL</p>
+                <p style='margin:10px 0 0 0; font-size:0.85rem; color:#444;'>
+                İlanlardan Hesaplanan KM Katsayısı: <b>{final_katsayi:.2f} TL/KM</b><br>
+                (Yani her 5.000 KM için pazar etkisi: <b>{(final_katsayi * 5000):,.0f} TL</b>)
+                </p>
             </div>
         """, unsafe_allow_html=True)
 
