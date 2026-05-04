@@ -4,113 +4,122 @@ import numpy as np
 import re
 
 # --- PRESTİJ AYARLARI ---
-st.set_page_config(page_title="Bİ'EDERİ | Ultra-Premium", layout="centered")
+st.set_page_config(page_title="Bİ'EDERİ | Elite", layout="centered")
 
 st.markdown("""
     <style>
     @import url('https://googleapis.com');
     
-    /* 1. ANA ARKA PLAN: Derin Antrasit ve Safir Geçişi */
+    /* 1. OLED BLACK ARKA PLAN */
     .stApp {
-        background: radial-gradient(circle at top right, #1a1c23, #08090a) !important;
-        font-family: 'Inter', sans-serif !important;
+        background-color: #000000 !important;
+        background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000000 70%) !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
 
-    /* 2. SİYAH KUTUCUKLARI VE VARSAYILAN GÖLGELERİ YOK ETME */
-    div[data-baseweb="input"], div[data-baseweb="select"], .stNumberInput div, .stSelectbox div {
+    /* 2. SİYAH KUTUCUKLARI VE STANDART GÖLGELERİ YOK ETME PROTOKOLÜ */
+    /* Streamlit'in tüm iskeletini şeffaflaştırıyoruz */
+    div[data-baseweb="input"], div[data-baseweb="select"], div[data-baseweb="base-input"],
+    .stNumberInput div, .stSelectbox div, .stMultiSelect div, [data-testid="stForm"] {
         background-color: transparent !important;
+        background: transparent !important;
         border: none !important;
         box-shadow: none !important;
     }
 
-    /* 3. LÜKS GİRİŞ ALANLARI: Kartla Bütünleşik */
+    /* 3. LÜKS GİRİŞ ALANLARI (Custom UI) */
     input, div[role="combobox"], [data-baseweb="select"] > div {
-        background-color: rgba(255, 255, 255, 0.03) !important;
+        background-color: rgba(255, 255, 255, 0.04) !important;
         color: #FFFFFF !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 15px !important;
-        padding: 14px !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 20px !important;
+        padding: 15px !important;
+        font-weight: 600 !important;
         font-size: 1rem !important;
-        font-weight: 500 !important;
-        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        transition: all 0.5s ease !important;
     }
 
-    input:focus {
-        background-color: rgba(255, 255, 255, 0.07) !important;
+    input:focus, div[role="combobox"]:focus {
         border-color: #FF0000 !important;
-        box-shadow: 0 0 15px rgba(255, 0, 0, 0.2) !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 0 20px rgba(255, 0, 0, 0.2) !important;
     }
 
-    /* 4. ELMAS KESİM KART TASARIMI */
+    /* 4. ANA KART: "Frozen Glass" */
     .luxury-card {
         background: rgba(255, 255, 255, 0.02) !important;
         border: 1px solid rgba(255, 255, 255, 0.05) !important;
-        border-radius: 35px !important;
+        border-radius: 40px !important;
         padding: 50px !important;
-        backdrop-filter: blur(25px);
-        box-shadow: 0 30px 60px rgba(0,0,0,0.4);
-        margin-top: 20px;
+        backdrop-filter: blur(40px);
+        box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+        margin-bottom: 30px;
     }
 
-    /* 5. BAŞLIKLAR: Modern & Pahalı */
+    /* 5. BAŞLIK: Ultra Minimal & Rich */
     h1 {
-        font-weight: 900 !important;
-        letter-spacing: -3px !important;
-        background: linear-gradient(to right, #FFFFFF, #888);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-size: 5.5rem !important;
+        font-weight: 800 !important;
+        letter-spacing: -4px !important;
+        color: #FFFFFF !important;
+        font-size: 6rem !important;
+        margin-bottom: 0px !important;
     }
-
-    .sub-brand {
+    
+    .tagline {
         color: #FF0000 !important;
-        letter-spacing: 10px !important;
-        font-size: 0.8rem !important;
-        font-weight: 700 !important;
+        letter-spacing: 12px !important;
+        font-size: 0.7rem !important;
+        font-weight: 800 !important;
         text-transform: uppercase;
-        margin-top: -30px;
-        opacity: 0.8;
+        opacity: 0.9;
+        margin-top: -20px;
     }
 
-    /* 6. FİYAT PANELİ: "The Golden Vault" */
+    /* 6. FİYAT EKRANI: "Hyper-Focus" */
     .price-box {
-        background: linear-gradient(135deg, #FFCC00 0%, #FFAA00 100%) !important;
-        padding: 50px 20px !important;
-        border-radius: 30px !important;
+        background: linear-gradient(135deg, #FFCC00 0%, #FF9900 100%) !important;
+        padding: 60px 20px !important;
+        border-radius: 40px !important;
         text-align: center !important;
         margin: 40px 0 !important;
-        box-shadow: 0 20px 40px rgba(255, 204, 0, 0.2);
+        box-shadow: 0 30px 60px rgba(255, 153, 0, 0.2);
     }
     
     .price-val { 
         color: #000000 !important; 
-        font-size: 5rem !important; 
-        font-weight: 900 !important; 
-        letter-spacing: -2px !important;
+        font-size: 6rem !important; 
+        font-weight: 800 !important; 
+        letter-spacing: -5px !important;
+        line-height: 1;
     }
 
-    /* 7. BUTON: Red Velvet */
+    /* 7. BUTON: "Ignition" */
     .stButton>button {
         background: #FF0000 !important;
         color: #FFFFFF !important;
         font-weight: 700 !important;
-        letter-spacing: 1px !important;
-        border-radius: 18px !important;
+        letter-spacing: 2px !important;
+        border-radius: 25px !important;
         height: 4.5em !important;
         border: none !important;
-        transition: 0.4s !important;
-        width: 100% !important;
+        transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1) !important;
         text-transform: uppercase !important;
+        font-size: 1rem !important;
     }
 
     .stButton>button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 10px 30px rgba(255, 0, 0, 0.4);
+        background: #FFFFFF !important;
+        color: #FF0000 !important;
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(255, 255, 255, 0.2);
     }
+    
+    /* Etiketler */
+    label { color: rgba(255,255,255,0.4) !important; font-weight: 600 !important; font-size: 0.75rem !important; letter-spacing: 1px !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- VERİ ANALİZİ ---
+# --- ANALİZ MOTORU ---
 def veriyi_ayristir(metin):
     fiyatlar = [int(f.replace(".", "")) for f in re.findall(r"([\d\.]+)\s*TL", metin)]
     yillar = [int(y) for y in re.findall(r"\b(20[0-2][0-9])\b", metin)]
@@ -124,15 +133,15 @@ def veriyi_ayristir(metin):
     if limit == 0: return pd.DataFrame()
     return pd.DataFrame({"Yıl": yillar[:limit], "Fiyat": fiyatlar[:limit], "KM": kms[:limit]}).drop_duplicates()
 
-# --- BAŞLIK ---
+# --- HEADER ---
 st.markdown("<br><h1 style='text-align: center;'>Bİ'EDERİ</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-brand' style='text-align: center;'>Professional Automotive Assets</p>", unsafe_allow_html=True)
+st.markdown("<p class='tagline' style='text-align: center;'>Elite Asset Valuation</p>", unsafe_allow_html=True)
 
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#666; font-size:0.9rem;'>MARKET INTELLIGENCE DATA GİRİŞİ</p>", unsafe_allow_html=True)
-    raw_input = st.text_area("", height=200, placeholder="İlan havuzunu buraya kopyalayın...")
-    if st.button("SİSTEMİ AKTİVE ET"):
+    st.markdown("<p style='color:rgba(255,255,255,0.4); font-size:0.8rem; letter-spacing:2px;'>MARKET DATA FEED</p>", unsafe_allow_html=True)
+    raw_input = st.text_area("", height=200, placeholder="Piyasa verilerini buraya aktarın...")
+    if st.button("ANALİZİ BAŞLAT"):
         if raw_input:
             temp_df = veriyi_ayristir(raw_input)
             if not temp_df.empty:
@@ -140,21 +149,22 @@ if 'data' not in st.session_state:
                 st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 else:
+    # --- FORM ---
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("luxury_form"):
-        st.markdown("<p style='color:#FF0000; font-weight:700; margin-bottom:20px;'>VEHICLE CONFIGURATION</p>", unsafe_allow_html=True)
+    with st.form("elite_form"):
+        st.markdown("<p style='color:#FF0000; font-weight:800; font-size:0.8rem; letter-spacing:3px;'>01. ARAÇ PARAMETRELERİ</p>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
-            v_yil = st.selectbox("📅 MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
-            v_km = st.number_input("🛣️ KİLOMETRE", value=50000, step=5000)
+            v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
+            v_km = st.number_input("KİLOMETRE", value=50000, step=5000)
             v_vites = st.radio("ŞANZIMAN", ["Otomatik", "Manuel"], horizontal=True)
         with col2:
-            v_hasar = st.number_input("💸 TRAMER (TL)", value=0, step=1000)
-            v_boya = st.multiselect("🎨 BOYA", ["Kaput", "Tavan", "Bagaj", "Kapılar", "Çamurluklar"])
-            v_degisen = st.multiselect("🛠️ DEĞİŞEN", ["Kaput", "Bagaj", "Kapı", "Çamurluk"])
+            v_hasar = st.number_input("TRAMER (TL)", value=0, step=1000)
+            v_boya = st.multiselect("BOYALI PARÇALAR", ["Kaput", "Tavan", "Bagaj", "Yanlar"])
+            v_degisen = st.multiselect("DEĞİŞEN PARÇALAR", ["Kaput", "Bagaj", "Kapı"])
         
         st.write("<br>", unsafe_allow_html=True)
-        submit = st.form_submit_button("DEĞERLEMEYİ GERÇEKLEŞTİR")
+        submit = st.form_submit_button("DEĞERİ HESAPLA")
 
     if submit:
         df = st.session_state.data
@@ -168,11 +178,11 @@ else:
 
         st.markdown(f"""
             <div class='price-box'>
-                <p style='color:#000; font-weight:700; letter-spacing:4px; opacity:0.6; font-size:0.8rem;'>ESTIMATED MARKET VALUE</p>
-                <h1 class='price-val'>{max(0, final_price):,.0f} TL</h1>
+                <p style='color:#000; font-weight:700; letter-spacing:5px; opacity:0.5; font-size:0.7rem; margin-bottom:10px;'>RAYİÇ BEDEL</p>
+                <h1 class='price-val'>{max(0, final_price):,.0f} <span style='font-size:1.5rem; letter-spacing:0;'>TL</span></h1>
             </div>
         """, unsafe_allow_html=True)
 
-    if st.button("🔄 YENİ EKSPERTİZ"):
+    if st.button("🔄 SIFIRLA"):
         del st.session_state.data
         st.rerun()
