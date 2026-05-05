@@ -2,9 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
-import urllib.parse
 
-# --- SAYFA AYARLARI ---
+# --- SAYFA AYARI ---
 st.set_page_config(page_title="Bİ'EDERİ | Değerini Öğren", layout="centered")
 
 st.markdown("""
@@ -17,35 +16,48 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
 
-    /* 2. KUTUCUKLARIN İÇİNİ TEMİZLEME (O ŞEYLERİ KALDIRAN KISIM) */
-    /* Sayı girişlerindeki artı-eksi butonlarını ve iç gölgeleri siler */
-    [data-testid="stNumberInput"] button { display: none !important; }
-    
+    /* 2. GÖRÜNÜRLÜK VE KUTUCUK TEMİZLİĞİ (KRİTİK BÖLÜM) */
+    /* Selectbox (Model Yılı) içindeki yazıyı bembeyaz yap */
+    [data-baseweb="select"] * {
+        color: #FFFFFF !important;
+        fill: #FFFFFF !important; /* Ok simgesi için */
+    }
+
+    /* MultiSelect (Boya/Değişen) içindeki baloncukları ve siyahlıkları temizle */
+    div[data-baseweb="tag"] {
+        background-color: #FF0000 !important;
+        border-radius: 5px !important;
+    }
+    div[data-baseweb="tag"] span {
+        color: #FFFFFF !important;
+    }
+
+    /* Giriş kutularının arkasındaki tüm Streamlit gölgelerini yok et */
     div[data-baseweb="input"], div[data-baseweb="select"], .stNumberInput div, .stSelectbox div {
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
     }
 
-    /* Giriş alanlarını pürüzsüz ve tek katman yapar */
-    input, div[data-baseweb="select"] > div {
-        background-color: #111111 !important;
+    /* Kutuların içini modern antrasit yap ve altın çerçeve ekle */
+    input, [data-baseweb="select"] > div {
+        background-color: #121212 !important;
         color: #FFFFFF !important;
-        border: 1px solid #d4af37 !important; /* İnce Altın Çerçeve */
+        border: 1px solid #d4af37 !important;
         border-radius: 10px !important;
-        padding: 12px !important;
+        padding: 10px !important;
         font-weight: 600 !important;
     }
 
-    /* Seçim kutusu yazısını beyaz yap */
-    div[data-baseweb="select"] span { color: white !important; }
+    /* Sayı girişindeki artı-eksi butonlarını tamamen gizle (Görüntüyü bozar) */
+    button[step] { display: none !important; }
 
-    /* 3. LÜKS KART TASARIMI */
+    /* 3. LÜKS KART */
     .luxury-card {
         background-color: #0a0a0a !important;
         border: 1px solid #1a1a1a !important;
         border-radius: 25px !important;
-        padding: 35px !important;
+        padding: 30px !important;
         margin-bottom: 25px !important;
         box-shadow: 0 10px 40px rgba(0,0,0,0.8);
     }
@@ -69,7 +81,6 @@ st.markdown("""
         border-radius: 20px !important;
         text-align: center !important;
         margin: 25px 0 !important;
-        box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
     }
     
     .price-val { color: #000 !important; font-size: 4rem !important; font-weight: 800 !important; margin: 0; }
@@ -84,11 +95,9 @@ st.markdown("""
         border: none !important;
         text-transform: uppercase !important;
         width: 100% !important;
-        transition: 0.3s !important;
     }
-    .stButton>button:hover { transform: scale(1.01); background: #cc0000 !important; }
 
-    label { color: #d4af37 !important; font-weight: 700 !important; font-size: 0.75rem !important; letter-spacing: 1px !important; }
+    label { color: #d4af37 !important; font-weight: 700; font-size: 0.75rem !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -112,7 +121,7 @@ st.markdown("<p class='gold-text' style='text-align: center;'>Gerçek Değerini 
 
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    raw_input = st.text_area("📋 İlan Verilerini Buraya Yapıştırın", height=200)
+    raw_input = st.text_area("📋 İlan Verilerini Yapıştırın", height=200)
     if st.button("ANALİZİ BAŞLAT"):
         if raw_input:
             temp_df = veriyi_ayristir(raw_input)
@@ -122,7 +131,7 @@ if 'data' not in st.session_state:
     st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("perfect_form"):
+    with st.form("perfection_form"):
         col1, col2 = st.columns(2)
         with col1:
             v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
