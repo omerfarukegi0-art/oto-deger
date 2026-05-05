@@ -17,45 +17,50 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
 
-    /* 2. BALONCUKLARI SİLEN VE KUTULARI GİZLEYEN RENK AYARI */
-    /* Giriş alanlarını kart rengiyle (#161b22) birebir eşitliyoruz */
+    /* 2. MODEL YILI VE TÜM YAZILARIN GÖRÜNÜR OLMASI İÇİN KESİN ÇÖZÜM */
+    /* Seçim kutusu ve sayı girişlerinin içindeki yazıları BEYAZ yapar */
+    div[data-baseweb="select"] span, 
+    div[data-baseweb="select"] div,
+    input {
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        font-weight: 600 !important;
+    }
+
+    /* Kutuların içindeki siyah boşlukları ve gölgeleri temizle */
     div[data-baseweb="input"], 
-    div[data-baseweb="select"], 
-    div[data-baseweb="base-input"],
-    .stNumberInput div, .stSelectbox div, .stMultiSelect div {
+    div[data-baseweb="select"] > div,
+    .stNumberInput div, .stSelectbox div {
         background-color: #161b22 !important;
         border: none !important;
         box-shadow: none !important;
     }
 
-    /* Yazı yazılan yerleri şıklaştır */
-    input, div[role="combobox"], [data-baseweb="select"] > div {
-        background-color: #161b22 !important; 
-        color: #FFFFFF !important;
+    /* Kutuların etrafına şık bir sınır ve alt neon çizgi ekle */
+    input, div[data-baseweb="select"] > div {
+        background-color: #1c2128 !important;
         border: 1px solid #30363d !important;
-        border-bottom: 2px solid #FFCC00 !important; /* Altın sarısı ince hat */
+        border-bottom: 2px solid #FFCC00 !important;
         border-radius: 12px !important;
-        padding: 10px !important;
-        font-weight: 600 !important;
-        font-size: 0.95rem !important;
+        padding: 8px 12px !important;
     }
 
-    /* 3. LÜKS KART: Boyutlar Daraltıldı */
+    /* 3. LÜKS KART */
     .luxury-card {
         background: #161b22 !important;
         border: 1px solid #30363d !important;
         border-radius: 25px !important;
         padding: 30px !important;
-        box-shadow: 0 15px 40px rgba(0,0,0,0.5);
-        border-left: 4px solid #FF0000 !important;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        border-left: 5px solid #FF0000 !important;
     }
 
-    /* 4. YAZI BOYUTLARI: Daha Zarif */
+    /* 4. BAŞLIK VE METİNLER */
     h1 {
         font-weight: 800 !important;
         letter-spacing: -1px !important;
         color: #FFFFFF !important;
-        font-size: 3.5rem !important; /* Küçültüldü */
+        font-size: 3.5rem !important;
         margin-bottom: 10px !important;
     }
     
@@ -68,7 +73,7 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* 5. FİYAT EKRANI: Optimize Edildi */
+    /* 5. FİYAT PANELİ */
     .price-box {
         background: linear-gradient(135deg, #FFCC00 0%, #FF9900 100%) !important;
         padding: 35px 20px !important;
@@ -79,13 +84,12 @@ st.markdown("""
     
     .price-val { 
         color: #000000 !important; 
-        font-size: 3.8rem !important; /* Küçültüldü */
+        font-size: 3.8rem !important; 
         font-weight: 800 !important; 
-        letter-spacing: -2px !important;
         line-height: 1;
     }
 
-    /* 6. BUTON: Daha Profesyonel */
+    /* 6. BUTON */
     .stButton>button {
         background: #FF0000 !important;
         color: #FFFFFF !important;
@@ -96,11 +100,11 @@ st.markdown("""
         text-transform: uppercase !important;
     }
 
-    label { color: #888 !important; font-weight: 600 !important; font-size: 0.8rem !important; }
+    label { color: #FFFFFF !important; font-weight: 600 !important; font-size: 0.8rem !important; opacity: 0.8; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- ANALİZ MOTORU ---
+# --- VERİ ANALİZİ ---
 def veriyi_ayristir(metin):
     fiyatlar = [int(f.replace(".", "")) for f in re.findall(r"([\d\.]+)\s*TL", metin)]
     yillar = [int(y) for y in re.findall(r"\b(20[0-2][0-9])\b", metin)]
@@ -130,7 +134,7 @@ if 'data' not in st.session_state:
     st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("elite_form"):
+    with st.form("perfection_form"):
         col1, col2 = st.columns(2)
         with col1:
             v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
