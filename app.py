@@ -4,8 +4,9 @@ import numpy as np
 import re
 
 # --- SAYFA AYARI ---
-st.set_page_config(page_title="Bİ'EDERİ | Dengeli Analiz", layout="centered")
+st.set_page_config(page_title="Bİ'EDERİ | Piyasa Analiz", layout="centered")
 
+# --- LÜKS TASARIM ---
 st.markdown("""
     <style>
     .stApp { background-color: #0e1117; }
@@ -48,7 +49,7 @@ def veriyi_ayristir(metin):
     if limit == 0: return pd.DataFrame()
     return pd.DataFrame({"Yıl": yillar[:limit], "Fiyat": fiyatlar[:limit], "KM": kms[:limit]}).drop_duplicates()
 
-parcalar = ["Kaput", "Tavan", "Bagaj Kapağı", "Sol Ön Çamur.", "Sol Ön Kapı", "Sol Arka Kapı", "Sol Arka Çamur.", "Sağ Ön Çamurluk", "Sağ Ön Kapı", "Sağ Arka Kapı", "Sağ Arka Çamur."]
+parcalar = ["Kaput", "Tavan", "Bagaj Kapağı", "Sol Ön Çamur.", "Sol Ön Kapı", "Sol Arka Kapı", "Sol Arka Çamur.", "Sağ Ön Çamur.", "Sağ Ön Kapı", "Sağ Arka Kapı", "Sağ Arka Çamur."]
 
 st.markdown("<h1>Bİ'<span style='color:#FF0000'>EDERİ</span></h1>", unsafe_allow_html=True)
 
@@ -64,7 +65,7 @@ if 'data' not in st.session_state:
     st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("dengeli_form"):
+    with st.form("lider_form"):
         col1, col2 = st.columns(2)
         with col1:
             v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
@@ -74,53 +75,49 @@ else:
             v_hasar = st.number_input("💸 TRAMER KAYDI (TL)", value=0)
             v_boya = st.multiselect("🎨 BOYA", parcalar)
             v_degisen = st.multiselect("🛠️ DEĞİŞEN", parcalar)
-        submit = st.form_submit_button("DENGELİ DEĞERLEME YAP")
+        submit = st.form_submit_button("GERÇEK DEĞERİ HESAPLA")
 
     if submit:
         df = st.session_state.data
         yil_daslar = df[df["Yıl"] == v_yil].copy()
         
         if not yil_daslar.empty:
-            # 1. KM'YE EN YAKIN 10 İLANI AL (Geniş havuz)
+            # 1. EN YAKIN 7 İLANI AL
             yil_daslar['Fark'] = (yil_daslar['KM'] - v_km).abs()
-            emsal_havuzu = yil_daslar.sort_values(by='Fark').head(10)
+            emsaller = yil_daslar.sort_values(by='Fark').head(7)
             
-            # 2. UÇLARI ELE (En pahalı %20 ve en ucuz %20'yi at)
-            # Bu sayede hem 'uçan' fiyatlar hem de 'hasarlı' ucuz ilanlar elenir.
-            alt_sinir = emsal_havuzu["Fiyat"].quantile(0.20)
-            ust_sinir = emsal_havuzu["Fiyat"].quantile(0.80)
-            temiz_emsaller = emsal_havuzu[(emsal_havuzu["Fiyat"] >= alt_sinir) & (emsal_havuzu["Fiyat"] <= ust_sinir)]
-            
-            # Eğer filtreleme sonrası veri kalmazsa havuzun medyanını al
-            baz_fiyat = temiz_emsaller["Fiyat"].median() if not temiz_emsaller.empty else emsal_havuzu["Fiyat"].median()
-            notu = "Piyasadaki uç fiyatlar elenerek, gerçekçi orta segment baz alındı."
+            # 2. ÜST DİLİM STRATEJİSİ: En ucuz %30'u "hasarlı/acil" diye ele.
+            # Kalan ilanların (Piyasanın düzgün araçları) ortalamasını al.
+            alt_sinir = emsaller["Fiyat"].quantile(0.30)
+            temiz_emsaller = emsaller[emsaller["Fiyat"] >= alt_sinir]
+            baz_fiyat = temiz_emsaller["Fiyat"].mean()
+            notu = "Piyasadaki düşük fiyatlı/hasarlı ilanlar elenerek 'temiz emsal' baz alındı."
         else:
             z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
-            baz_fiyat = np.poly1d(z)(v_yil)
-            notu = "Model yılında veri azlığı nedeniyle pazar eğilimi hesaplandı."
+            baz_fiyat = np.poly1d(z)(v_yil) * 1.05 # Veri yoksa %5 yukarıdan başla
+            notu = "Emsal veri azlığı nedeniyle pazar trendi yukarı yönlü hesaplandı."
 
-        # 3. KONDİSYON DÜZELTMELERİ (Hatasız araç seçildiyse ufak bir prim ekle)
-        hatasizlik_bonusu = baz_fiyat * 0.03 if (not v_boya and not v_degisen and v_hasar == 0) else 0
-        vites_farki = 55000 if v_vites == "Otomatik" else -20000
+        # 3. GÜÇLÜ KONDİSYON PRİMİ
+        # Hatasız araç piyasada her zaman paradır.
+        bonus = baz_fiyat * 0.06 if (not v_boya and not v_degisen and v_hasar == 0) else 0
+        vites_farki = 65000 if v_vites == "Otomatik" else -25000
         
-        # Ekspertiz Düşümleri (Makul seviyede)
-        tramer_kesintisi = v_hasar * 0.12
-        boya_kesintisi = len(v_boya) * 7500
-        degisen_kesintisi = len(v_degisen) * 18000
+        # Kesintileri daha da yumuşattık (Piyasa artık ufak boyaya fiyat öldürmüyor)
+        kesinti = (v_hasar * 0.10) + (len(v_boya) * 6000) + (len(v_degisen) * 15000)
         
-        final_price = baz_fiyat + hatasizlik_bonusu + vites_farki - (tramer_kesintisi + boya_kesintisi + degisen_kesintisi)
+        final_price = baz_fiyat + bonus + vites_farki - kesinti
 
         st.markdown(f"""
             <div class='price-box'>
-                <p style='color:#000; font-weight:700; opacity:0.6;'>GERÇEKÇİ PAZAR DEĞERİ</p>
+                <p style='color:#000; font-weight:700; opacity:0.6;'>GÜNCEL PAZAR DEĞERİ</p>
                 <h1 class='price-val'>{max(0, final_price):,.0f} TL</h1>
                 <p style='margin:0; font-size:0.8rem; color:#444;'>{notu}</p>
             </div>
         """, unsafe_allow_html=True)
 
         if not yil_daslar.empty:
-            st.markdown("### 🔍 Referans Alınan Piyasa Emsalleri")
-            for _, row in emsal_havuzu.head(3).iterrows():
+            st.markdown("### 🔍 Referans Alınan Temiz Emsaller")
+            for _, row in temiz_emsaller.head(3).iterrows():
                 st.markdown(f"<div class='emsal-card'><span style='color:#FFF;'>{row['Yıl']} • {row['KM']:,.0f} KM</span><span style='color:#FFCC00; font-weight:800; float:right;'>{row['Fiyat']:,.0f} TL</span></div>", unsafe_allow_html=True)
 
     if st.button("🔄 SIFIRLA"):
