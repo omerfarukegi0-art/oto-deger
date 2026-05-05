@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import re
 
-# --- PRESTİJ AYARLARI ---
-st.set_page_config(page_title="Bİ'EDERİ | Elite", layout="centered")
+# --- SAYFA AYARLARI ---
+st.set_page_config(page_title="Bİ'EDERİ | Değerini Öğren", layout="centered")
 
 st.markdown("""
     <style>
@@ -17,45 +17,48 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', sans-serif !important;
     }
 
-    /* 2. MODEL YILI VE TÜM YAZILARIN GÖRÜNÜR OLMASI İÇİN KESİN ÇÖZÜM */
-    /* Seçim kutusu ve sayı girişlerinin içindeki yazıları BEYAZ yapar */
-    div[data-baseweb="select"] span, 
-    div[data-baseweb="select"] div,
+    /* 2. MODEL YILI (SELECTBOX) VE TÜM GİRİŞLER İÇİN "BEYAZ YAZI" ZORLAMASI */
+    /* Bu blok, seçim kutusunun içindeki her şeyi beyaza boyar */
+    [data-baseweb="select"] * {
+        color: #FFFFFF !important;
+        fill: #FFFFFF !important; /* Ok işareti için */
+    }
+    
+    /* Seçim kutusunun liste menüsünü de görünür yap */
+    div[role="listbox"] ul li {
+        background-color: #1c2128 !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Tüm sayı ve metin girişlerini beyaz yap */
     input {
         color: #FFFFFF !important;
         -webkit-text-fill-color: #FFFFFF !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
     }
 
-    /* Kutuların içindeki siyah boşlukları ve gölgeleri temizle */
+    /* 3. KUTUCUK TASARIMLARI (Pürüzsüzleştirme) */
     div[data-baseweb="input"], 
     div[data-baseweb="select"] > div,
     .stNumberInput div, .stSelectbox div {
-        background-color: #161b22 !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-
-    /* Kutuların etrafına şık bir sınır ve alt neon çizgi ekle */
-    input, div[data-baseweb="select"] > div {
         background-color: #1c2128 !important;
         border: 1px solid #30363d !important;
         border-bottom: 2px solid #FFCC00 !important;
         border-radius: 12px !important;
-        padding: 8px 12px !important;
+        box-shadow: none !important;
     }
 
-    /* 3. LÜKS KART */
+    /* 4. LÜKS KART */
     .luxury-card {
         background: #161b22 !important;
         border: 1px solid #30363d !important;
         border-radius: 25px !important;
         padding: 30px !important;
         box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-        border-left: 5px solid #FF0000 !important;
+        border-left: 6px solid #FF0000 !important;
     }
 
-    /* 4. BAŞLIK VE METİNLER */
+    /* 5. BAŞLIK VE ETİKETLER */
     h1 {
         font-weight: 800 !important;
         letter-spacing: -1px !important;
@@ -70,10 +73,12 @@ st.markdown("""
         font-size: 0.7rem !important;
         text-transform: uppercase;
         margin-top: -15px;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
 
-    /* 5. FİYAT PANELİ */
+    label { color: #FFFFFF !important; font-weight: 600 !important; font-size: 0.8rem !important; opacity: 0.9; }
+
+    /* 6. FİYAT VE BUTON */
     .price-box {
         background: linear-gradient(135deg, #FFCC00 0%, #FF9900 100%) !important;
         padding: 35px 20px !important;
@@ -82,14 +87,8 @@ st.markdown("""
         margin: 25px 0 !important;
     }
     
-    .price-val { 
-        color: #000000 !important; 
-        font-size: 3.8rem !important; 
-        font-weight: 800 !important; 
-        line-height: 1;
-    }
+    .price-val { color: #000 !important; font-size: 3.8rem !important; font-weight: 800 !important; line-height: 1; }
 
-    /* 6. BUTON */
     .stButton>button {
         background: #FF0000 !important;
         color: #FFFFFF !important;
@@ -98,9 +97,8 @@ st.markdown("""
         height: 3.5em !important;
         border: none !important;
         text-transform: uppercase !important;
+        width: 100% !important;
     }
-
-    label { color: #FFFFFF !important; font-weight: 600 !important; font-size: 0.8rem !important; opacity: 0.8; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -134,7 +132,7 @@ if 'data' not in st.session_state:
     st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("perfection_form"):
+    with st.form("elite_form"):
         col1, col2 = st.columns(2)
         with col1:
             v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
