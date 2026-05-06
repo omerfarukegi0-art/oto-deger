@@ -46,7 +46,7 @@ parcalar = ["Kaput", "Tavan", "Bagaj Kapağı", "Sol Ön Çamur.", "Sol Ön Kap�
 
 # --- LOGO ---
 st.markdown("<h1 style='text-align: center; color: white; font-family: sans-serif; font-size: 4rem; font-weight: 800; margin-bottom: 0;'>Bİ'<span style='color:#FF0000'>EDERİ</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #d4af37; font-weight: 700; letter-spacing: 2px; margin-top: -10px;'>MAKSİMUM PİYASA ENDEKSİ</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #d4af37; font-weight: 700; letter-spacing: 2px; margin-top: -10px;'>NOKTA ATIŞI FİYAT ANALİZİ</p>", unsafe_allow_html=True)
 
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
@@ -58,7 +58,7 @@ if 'data' not in st.session_state:
     st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("max_calibration"):
+    with st.form("final_calibration"):
         col1, col2 = st.columns(2)
         with col1:
             v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
@@ -68,7 +68,7 @@ else:
             v_hasar = st.number_input("TRAMER (TL)", value=0)
             v_boya = st.multiselect("🎨 BOYA", parcalar)
             v_degisen = st.multiselect("🛠️ DEĞİŞEN", parcalar)
-        submit = st.form_submit_button("LİSTE FİYATINI HESAPLA")
+        submit = st.form_submit_button("BİREBİR DEĞERLEMEYİ YAP")
 
     if submit:
         df = st.session_state.data
@@ -76,27 +76,27 @@ else:
         
         if not yil_daslar.empty:
             yil_daslar['Fark'] = (yil_daslar['KM'] - v_km).abs()
-            # En yakın emsallerin ortalamasını alıp üstüne 'Piyasa Bonusu' ekliyoruz
+            # En yakın 2 emsal ortalaması
             baz_pazar_fiyati = yil_daslar.sort_values(by='Fark').head(2)["Fiyat"].mean()
             
-            # --- AGRESİF PİYASA DÜZELTMESİ (+35.000 TL) ---
-            baz_pazar_fiyati += 35000 
+            # --- HASSAS PİYASA DÜZELTMESİ (+30.000 TL) ---
+            baz_pazar_fiyati += 30000 
         else:
             z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
-            baz_pazar_fiyati = np.poly1d(z)(v_yil) + 35000
+            baz_pazar_fiyati = np.poly1d(z)(v_yil) + 30000
 
-        # Ekspertiz katsayıları (Minimuma indirildi, ilan fiyatını yukarıda tutar)
-        pazar_degeri = baz_pazar_fiyati - (len(v_boya) * 1000) - (len(v_degisen) * 2500) - (v_hasar * 0.01)
+        # Ekspertiz katsayıları (Sembolik düşüşler)
+        pazar_degeri = baz_pazar_fiyati - (len(v_boya) * 1200) - (len(v_degisen) * 3000) - (v_hasar * 0.01)
         
-        # Trink Makası (%2.5 - Piyasa değerine çok yakın nakit alım)
-        trink_fiyat = pazar_degeri * 0.975
+        # Trink Makası (%3)
+        trink_fiyat = pazar_degeri * 0.97
 
         st.markdown(f"""
             <div class='trink-box'>
                 <p style='color:#FFF; font-weight:700; opacity:0.8; margin-bottom:5px;'>GÜNCEL PAZAR DEĞERİ</p>
                 <h1 class='price-val'>{max(0, pazar_degeri):,.0f} TL</h1>
                 <div style='margin-top:10px; border-top:1px solid rgba(255,255,255,0.2); padding-top:10px;'>
-                    <p style='color:#FFF; font-size:1.1rem;'>Tahmini Liste Fiyatı: {max(0, pazar_degeri + 15000):,.0f} TL</p>
+                    <p style='color:#FFF; font-size:1.1rem;'>Trink Sat / Nakit Alım: {max(0, trink_fiyat):,.0f} TL</p>
                 </div>
             </div>
         """, unsafe_allow_html=True)
