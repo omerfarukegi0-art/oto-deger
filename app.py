@@ -4,7 +4,7 @@ import numpy as np
 import re
 
 # --- SAYFA AYARI ---
-st.set_page_config(page_title="Bİ'EDERİ | Master Kalibrasyon", layout="centered")
+st.set_page_config(page_title="Bİ'EDERİ | Hassas Terazi", layout="centered")
 
 st.markdown("""
     <style>
@@ -56,7 +56,7 @@ if 'data' not in st.session_state:
     st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("precision_form"):
+    with st.form("perfect_match"):
         col1, col2 = st.columns(2)
         with col1:
             v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
@@ -66,37 +66,31 @@ else:
             v_hasar = st.number_input("TRAMER (TL)", value=0)
             v_boya = st.multiselect("🎨 BOYA", parcalar)
             v_degisen = st.multiselect("🛠️ DEĞİŞEN", parcalar)
-        submit = st.form_submit_button("BİREBİR FİYATI HESAPLA")
+        submit = st.form_submit_button("BİREBİR FİYATI HAKEMLE")
 
     if submit:
         df = st.session_state.data
         yil_daslar = df[df["Yıl"] == v_yil].copy()
         
         if not yil_daslar.empty:
-            # 1. BAZ FİYATI DÜZELTME: İlanlardaki fiyatlar zaten boyalı araçları içerir.
-            # 785.000 TL emsali yakalamak için medyan fiyatı kullanıyoruz.
-            baz_pazar_fiyati = yil_daslar["Fiyat"].median()
-            
-            # 2. KM DENGESİ: Referans araçla senin KM'n arasındaki farkı çok hafif yansıtıyoruz
-            km_ort = yil_daslar["KM"].mean()
-            km_farki = km_ort - v_km
-            baz_pazar_fiyati += (km_farki * 2.5) # KM etkisini yumuşattık
+            # 1. NOKTA ATIŞI EMSAL: Senin KM'ne en yakın 3 ilanın ortalaması
+            yil_daslar['Fark'] = (yil_daslar['KM'] - v_km).abs()
+            baz_pazar_fiyati = yil_daslar.sort_values(by='Fark').head(3)["Fiyat"].mean()
         else:
             z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
             baz_pazar_fiyati = np.poly1d(z)(v_yil)
 
-        # 3. MİLİMETRİK EKSPERTİZ AYARI (Birebir İlan Uyumu İçin)
-        # Piyasadaki araçlar zaten 1-2 parça boyalı olduğu için kesintiyi çok küçük tutuyoruz
-        boya_kaybi = len(v_boya) * 4500 # Parça başı sadece 4.500 TL (Pazar payı kadar)
-        degisen_kaybi = len(v_degisen) * 12000 # Değişen başına 12.000 TL
-        tramer_kaybi = v_hasar * 0.08 # Tramerin sadece %8'i
+        # 2. MİNİMALİST EKSPERTİZ DÜZELTMESİ
+        # Pazar fiyatını bozmamak için kesintileri piyasadaki 'pazarlık payı' seviyesine çektik
+        boya_etkisi = len(v_boya) * 3000 # Her parça boya için sadece 3.000 TL düşer
+        degisen_etkisi = len(v_degisen) * 8000 # Her değişen için sadece 8.000 TL düşer
+        tramer_etkisi = v_hasar * 0.05 # Tramerin sadece %5'i (Piyasa bunu zaten kabullenmiş durumdadır)
         
-        # 4. HESAPLAMA
-        if v_vites == "Otomatik": baz_pazar_fiyati += 40000
-        pazar_degeri = baz_pazar_fiyati - (boya_kaybi + degisen_kaybi + tramer_kaybi)
+        # 3. NİHAİ HESAPLAMA
+        pazar_degeri = baz_pazar_fiyati - (boya_etkisi + degisen_etkisi + tramer_etkisi)
         
-        # TRİNK MAKASI (Minimum %4)
-        trink_fiyat = pazar_degeri * 0.96
+        # Trink Makası (Sadece %3 hızlı nakit kırımı)
+        trink_fiyat = pazar_degeri * 0.97
 
         st.markdown(f"""
             <div class='trink-box'>
@@ -104,12 +98,12 @@ else:
                 <h1 class='price-val'>{max(0, pazar_degeri):,.0f} TL</h1>
                 <div style='margin-top:10px; border-top:1px solid rgba(255,255,255,0.2); padding-top:10px;'>
                     <p style='color:#FFF; font-size:1.1rem;'>
-                        Trink Sat Teklifi: {max(0, trink_fiyat):,.0f} TL
+                        Nakit Alım (Trink): {max(0, trink_fiyat):,.0f} TL
                     </p>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
-    if st.button("🔄 SIFIRLA"):
+    if st.button("🔄 LİSTEYİ TEMİZLE"):
         del st.session_state.data
         st.rerun()
