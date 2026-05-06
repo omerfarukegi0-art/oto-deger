@@ -43,9 +43,9 @@ def veriyi_ayristir(metin):
 
 parcalar = ["Kaput", "Tavan", "Bagaj Kapağı", "Sol Ön Çamur.", "Sol Ön Kapı", "Sol Arka Kapı", "Sol Arka Çamur.", "Sağ Ön Çamur.", "Sağ Ön Kapı", "Sağ Arka Kapı", "Sağ Arka Çamur."]
 
-# --- LOGO DÜZELTME ---
+# --- LOGO ---
 st.markdown("<h1 style='text-align: center; color: white; font-family: sans-serif; font-size: 4rem; font-weight: 800; margin-bottom: 0;'>Bİ'<span style='color:#FF0000'>EDERİ</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #d4af37; font-weight: 700; letter-spacing: 2px; margin-top: -10px;'>HASSAS PİYASA ANALİZİ</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #d4af37; font-weight: 700; letter-spacing: 2px; margin-top: -10px;'>NOKTA ATIŞI PİYASA ANALİZİ</p>", unsafe_allow_html=True)
 
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
@@ -57,7 +57,7 @@ if 'data' not in st.session_state:
     st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("precision_fix"):
+    with st.form("final_fix"):
         col1, col2 = st.columns(2)
         with col1:
             v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
@@ -67,25 +67,28 @@ else:
             v_hasar = st.number_input("TRAMER (TL)", value=0)
             v_boya = st.multiselect("🎨 BOYA", parcalar)
             v_degisen = st.multiselect("🛠️ DEĞİŞEN", parcalar)
-        submit = st.form_submit_button("BİREBİR DEĞERLEMEYİ YAP")
+        submit = st.form_submit_button("BİREBİR FİYATI HESAPLA")
 
     if submit:
         df = st.session_state.data
         yil_daslar = df[df["Yıl"] == v_yil].copy()
         
         if not yil_daslar.empty:
-            # Emsal bulurken senin KM'ne en yakın 2 ilanı baz alıyoruz (En hassas nokta)
             yil_daslar['Fark'] = (yil_daslar['KM'] - v_km).abs()
+            # En yakın 2 emsalin ortalamasını alıyoruz
             baz_pazar_fiyati = yil_daslar.sort_values(by='Fark').head(2)["Fiyat"].mean()
+            
+            # --- PİYASA DÜZELTMESİ (+20.000 TL) ---
+            baz_pazar_fiyati += 20000 
         else:
             z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
-            baz_pazar_fiyati = np.poly1d(z)(v_yil)
+            baz_pazar_fiyati = np.poly1d(z)(v_yil) + 20000
 
-        # Ekspertiz düşümlerini "minimum" seviyeye indirdik ki ilan fiyatından kopmasın
-        pazar_degeri = baz_pazar_fiyati - (len(v_boya) * 2000) - (len(v_degisen) * 5000) - (v_hasar * 0.03)
+        # Ekspertiz katsayıları (İlan fiyatını bozmayacak kadar küçük)
+        pazar_degeri = baz_pazar_fiyati - (len(v_boya) * 1500) - (len(v_degisen) * 4000) - (v_hasar * 0.02)
         
-        # Trink Makası (Nakit alım payı %3)
-        trink_fiyat = pazar_degeri * 0.97
+        # Trink Makası (%4)
+        trink_fiyat = pazar_degeri * 0.96
 
         st.markdown(f"""
             <div class='trink-box'>
