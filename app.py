@@ -4,7 +4,7 @@ import numpy as np
 import re
 
 # --- SAYFA AYARI ---
-st.set_page_config(page_title="Bİ'EDERİ | Değerini Öğren", layout="centered")
+st.set_page_config(page_title="Bİ'EDERİ | Mantıksal Analiz", layout="centered")
 
 st.markdown("""
     <style>
@@ -23,7 +23,6 @@ st.markdown("""
         text-align: center; 
         margin: 20px 0; 
         border: 2px solid #FFF;
-        box-shadow: 0 10px 40px rgba(255, 0, 0, 0.3);
     }
     .price-val { color: #FFFFFF; font-size: 3.8rem; font-weight: 900; margin: 0; line-height: 1.1; }
     .stButton>button {
@@ -44,9 +43,8 @@ def veriyi_ayristir(metin):
 
 parcalar = ["Kaput", "Tavan", "Bagaj Kapağı", "Sol Ön Çamur.", "Sol Ön Kapı", "Sol Arka Kapı", "Sol Arka Çamur.", "Sağ Ön Çamur.", "Sağ Ön Kapı", "Sağ Arka Kapı", "Sağ Arka Çamur."]
 
-# --- LOGO ---
 st.markdown("<h1 style='text-align: center; color: white; font-family: sans-serif; font-size: 4rem; font-weight: 800; margin-bottom: 0;'>Bİ'<span style='color:#FF0000'>EDERİ</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #d4af37; font-weight: 700; letter-spacing: 2px; margin-top: -10px;'>NOKTA ATIŞI FİYAT ANALİZİ</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #d4af37; font-weight: 700; letter-spacing: 2px; margin-top: -10px;'>KM MANTIK KORUMALI ANALİZ</p>", unsafe_allow_html=True)
 
 if 'data' not in st.session_state:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
@@ -58,7 +56,7 @@ if 'data' not in st.session_state:
     st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.markdown("<div class='luxury-card'>", unsafe_allow_html=True)
-    with st.form("final_calibration"):
+    with st.form("logic_fix"):
         col1, col2 = st.columns(2)
         with col1:
             v_yil = st.selectbox("MODEL YILI", sorted(st.session_state.data["Yıl"].unique(), reverse=True))
@@ -68,35 +66,46 @@ else:
             v_hasar = st.number_input("TRAMER (TL)", value=0)
             v_boya = st.multiselect("🎨 BOYA", parcalar)
             v_degisen = st.multiselect("🛠️ DEĞİŞEN", parcalar)
-        submit = st.form_submit_button("BİREBİR DEĞERLEMEYİ YAP")
+        submit = st.form_submit_button("ANALİZİ BAŞLAT")
 
     if submit:
         df = st.session_state.data
         yil_daslar = df[df["Yıl"] == v_yil].copy()
         
+        # --- KM MANTIK KORUMASI ---
         if not yil_daslar.empty:
-            yil_daslar['Fark'] = (yil_daslar['KM'] - v_km).abs()
-            # En yakın 2 emsal ortalaması
-            baz_pazar_fiyati = yil_daslar.sort_values(by='Fark').head(2)["Fiyat"].mean()
+            # 1. Adım: O yılın tüm araçlarından "KM Başına Değer Kaybı" trendini hesapla
+            # Bu, tekil ilan hatalarını (pahalı yazılmış yüksek KM'li araç gibi) eler.
+            z = np.polyfit(yil_daslar["KM"], yil_daslar["Fiyat"], 1)
+            p_func = np.poly1d(z)
             
-            # --- HASSAS PİYASA DÜZELTMESİ (+30.000 TL) ---
-            baz_pazar_fiyati += 30000 
+            # 2. Adım: Senin KM'ne denk gelen "Trend Fiyatı" bul
+            baz_pazar_fiyati = p_func(v_km)
+            
+            # Trend çok saçmalamışsa (örn: km arttıkça fiyat artıyorsa), medyan emsale dön
+            if z[0] > 0: 
+                yil_daslar['Fark'] = (yil_daslar['KM'] - v_km).abs()
+                baz_pazar_fiyati = yil_daslar.sort_values(by='Fark').head(3)["Fiyat"].mean()
+            
+            # Piyasa Düzeltmesi (+20.000 TL)
+            baz_pazar_fiyati += 20000
         else:
             z = np.polyfit(df["Yıl"], df["Fiyat"], 1)
-            baz_pazar_fiyati = np.poly1d(z)(v_yil) + 30000
+            baz_pazar_fiyati = np.poly1d(z)(v_yil) + 20000
 
-        # Ekspertiz katsayıları (Sembolik düşüşler)
-        pazar_degeri = baz_pazar_fiyati - (len(v_boya) * 1200) - (len(v_degisen) * 3000) - (v_hasar * 0.01)
+        # Ekspertiz Düşümleri
+        kesinti = (len(v_boya) * 1500) + (len(v_degisen) * 4000) + (v_hasar * 0.02)
+        pazar_degeri = baz_pazar_fiyati - kesinti
         
-        # Trink Makası (%3)
-        trink_fiyat = pazar_degeri * 0.97
+        # Trink Makası
+        trink_fiyat = pazar_degeri * 0.96
 
         st.markdown(f"""
             <div class='trink-box'>
                 <p style='color:#FFF; font-weight:700; opacity:0.8; margin-bottom:5px;'>GÜNCEL PAZAR DEĞERİ</p>
                 <h1 class='price-val'>{max(0, pazar_degeri):,.0f} TL</h1>
                 <div style='margin-top:10px; border-top:1px solid rgba(255,255,255,0.2); padding-top:10px;'>
-                    <p style='color:#FFF; font-size:1.1rem;'>Trink Sat / Nakit Alım: {max(0, trink_fiyat):,.0f} TL</p>
+                    <p style='color:#FFF; font-size:1.1rem;'>Trink Nakit Alım: {max(0, trink_fiyat):,.0f} TL</p>
                 </div>
             </div>
         """, unsafe_allow_html=True)
